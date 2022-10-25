@@ -1,0 +1,50 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.3.32922.545
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "libtbskmodem", "libtbskmodem\libtbskmodem.csproj", "{19F98168-14B3-45A1-8B85-F5CEFD995764}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "getstarted", "getstarted", "{03820225-A674-4791-8077-35236AC931CF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "step2_demodulate", "step2_demodulate\step2_demodulate.csproj", "{146C2443-2EA9-42FE-AF31-F3D9E3DA729F}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "step1_modulate", "step1_modulate\step1_modulate.csproj", "{0DB05030-FBB6-40BD-B139-577602E227ED}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "step3_bytedata", "step3_bytedata\step3_bytedata.csproj", "{CAD29069-28A7-4D5B-BF30-B63E9803E7BA}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{19F98168-14B3-45A1-8B85-F5CEFD995764}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{19F98168-14B3-45A1-8B85-F5CEFD995764}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{19F98168-14B3-45A1-8B85-F5CEFD995764}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{19F98168-14B3-45A1-8B85-F5CEFD995764}.Release|Any CPU.Build.0 = Release|Any CPU
+		{146C2443-2EA9-42FE-AF31-F3D9E3DA729F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{146C2443-2EA9-42FE-AF31-F3D9E3DA729F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{146C2443-2EA9-42FE-AF31-F3D9E3DA729F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{146C2443-2EA9-42FE-AF31-F3D9E3DA729F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0DB05030-FBB6-40BD-B139-577602E227ED}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0DB05030-FBB6-40BD-B139-577602E227ED}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0DB05030-FBB6-40BD-B139-577602E227ED}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0DB05030-FBB6-40BD-B139-577602E227ED}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CAD29069-28A7-4D5B-BF30-B63E9803E7BA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CAD29069-28A7-4D5B-BF30-B63E9803E7BA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CAD29069-28A7-4D5B-BF30-B63E9803E7BA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CAD29069-28A7-4D5B-BF30-B63E9803E7BA}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{146C2443-2EA9-42FE-AF31-F3D9E3DA729F} = {03820225-A674-4791-8077-35236AC931CF}
+		{0DB05030-FBB6-40BD-B139-577602E227ED} = {03820225-A674-4791-8077-35236AC931CF}
+		{CAD29069-28A7-4D5B-BF30-B63E9803E7BA} = {03820225-A674-4791-8077-35236AC931CF}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {F5DAC155-8AC7-4201-BB27-40A13FC6A4B5}
+	EndGlobalSection
+EndGlobal
