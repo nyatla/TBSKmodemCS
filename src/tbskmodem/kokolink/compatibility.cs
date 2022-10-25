@@ -11,22 +11,22 @@ using jp.nyatla.kokolink.utils.recoverable;
 namespace jp.nyatla.kokolink.compatibility
 {
 
-    //  GetEnumerator�œǎ�ʒu�����Z�b�g����Ȃ�IEnumerable�ł��B
-    //  �V���Ɏ擾�����ꍇ�́A���݂̓ǎ�ʒu���N�_�Ƃ����C���X�^���X��Ԃ����������܂��B
+    //  GetEnumeratorで読取位置をリセットされないIEnumerableです。
+    //  新たに取得した場合は、現在の読取位置を起点としたインスタンスを返す実装をします。
     //
     public interface ISequentialEnumerable<T> : IEnumerable<T> { }
 
 
 
-    //  IPyEnumerator���\�[�X�ɂ���IEnumerator
-    //  MoveTo��IpyIterator�̎d�l�������p����RecoverableStopIteration���X���[���邱�Ƃ�����܂��B
+    //  IPyEnumeratorをソースにしたIEnumerator
+    //  MoveToはIpyIteratorの仕様を引き継いでRecoverableStopIterationをスローすることがあります。
     class PyIterSuorceIEnumerator<T> : IEnumerator<T>
     {
         private readonly IPyIterator<T> _src;
         private T? _current;
         public PyIterSuorceIEnumerator(IPyIterator<T> src)
         {
-            Debug.Assert(src is not IEnumerator<T>); //Enumulable�������Ȃ�����
+            Debug.Assert(src is not IEnumerator<T>); //Enumulableを持たないこと
             this._src = src;
             //this._current;
         }
@@ -87,7 +87,7 @@ namespace jp.nyatla.kokolink.compatibility
             //throw new NotImplementedException();
         }
     }
-    // ����Enumerable�͏�ɓ���Enumerable��Ԃ��܂��B
+    // このEnumerableは常に同じEnumerableを返します。
     sealed public class PyIterSuorceEnumerable<T> : ISequentialEnumerable<T>
     {
         readonly private IEnumerator<T> _src;
@@ -98,7 +98,7 @@ namespace jp.nyatla.kokolink.compatibility
 
         public PyIterSuorceEnumerable(IPyIterator<T> src)
         {
-            Debug.Assert(src is not IEnumerable<T>); //Enumulable�������Ȃ�����
+            Debug.Assert(src is not IEnumerable<T>); //Enumulableを持たないこと
             this._src = new PyIterSuorceIEnumerator<T>(src);
         }
         IEnumerator<T> IEnumerable<T>.GetEnumerator()
@@ -143,18 +143,18 @@ namespace jp.nyatla.kokolink.compatibility
 
         //static public ISequentialEnumerable<T> ToEnumerable<T>(IEnumerator<T> enumor)
         //{
-        //    Debug.Assert(enumor is not PyIterator<T>); //�݌v�~�X�̃g���b�v
+        //    Debug.Assert(enumor is not PyIterator<T>); //設計ミスのトラップ
         //    return new PyIterSuorceEnumerable<T>(enumor);
         //}
 
         static public ISequentialEnumerable<T> ToEnumerable<T>(IPyIterator<T> iter)
         {
-            Debug.Assert(iter is not PyIterator<T>); //�݌v�~�X�̃g���b�v
+            Debug.Assert(iter is not PyIterator<T>); //設計ミスのトラップ
             return new PyIterSuorceEnumerable<T>(iter); 
         }
         static public IPyIterator<T> ToPyIter<T>(IEnumerable<T> s)
         {
-            Debug.Assert(s is not PyIterSuorceEnumerable<T>); //�݌v�~�X�̃g���b�v
+            Debug.Assert(s is not PyIterSuorceEnumerable<T>); //設計ミスのトラップ
             if (s is IPyIterator<T> iterator)
             {
                 return iterator;

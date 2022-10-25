@@ -6,6 +6,8 @@ using jp.nyatla.kokolink.streams.rostreams;
 using jp.nyatla.kokolink.types;
 using jp.nyatla.kokolink.utils;
 using jp.nyatla.kokolink.utils.recoverable;
+using System.Runtime.InteropServices;
+
 namespace jp.nyatla.kokolink.filter
 {
 
@@ -52,7 +54,7 @@ namespace jp.nyatla.kokolink.filter
                 this._savedata.Add((byte)d);
                 try
                 {
-                    var r = System.Text.Encoding.GetEncoding(this._encoding).GetChars(this._savedata.ToArray());
+                    var r = System.Text.Encoding.GetEncoding(this._encoding,new EncoderExceptionFallback(),new DecoderExceptionFallback()).GetChars(this._savedata.ToArray());
                     this._savedata.Clear();
                     return r[0];
                 }
