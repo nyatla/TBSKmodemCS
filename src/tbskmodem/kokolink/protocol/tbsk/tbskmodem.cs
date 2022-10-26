@@ -415,11 +415,11 @@ namespace jp.nyatla.kokolink.protocol.tbsk.tbaskmodem
         //""" TBSK信号からビットを復元します。
         //    関数は信号を検知する迄制御を返しません。信号を検知せずにストリームが終了した場合はNoneを返します。
         //"""
-        public ISequentialEnumerable<int>? DemodulateAsBit(IEnumerable<double> src)
+        public ISequentialEnumerable<int>? DemodulateAsBit(IPyIterator<double> src)
         {
             Debug.Assert(!this._asmethod_lock);
             ISequentialEnumerable<int> builder(TraitBlockDecoder src) => Functions.ToEnumerable<int>(src);
-            AsyncMethod<ISequentialEnumerable<int>?> asmethod = new AsyncDemodulateX<int>(this, new PyIterator<double>(src), builder);
+            AsyncMethod<ISequentialEnumerable<int>?> asmethod = new AsyncDemodulateX<int>(this, src, builder);
             if (asmethod.Run())
             {
                 return asmethod.Result;
@@ -430,14 +430,19 @@ namespace jp.nyatla.kokolink.protocol.tbsk.tbaskmodem
                 throw new AsyncMethodRecoverException<AsyncMethod<ISequentialEnumerable<int>?>, ISequentialEnumerable<int>?>(asmethod);
             }
         }
+        public ISequentialEnumerable<int>? DemodulateAsBit(IEnumerable<double> src)
+        {
+            return this.DemodulateAsBit(Functions.ToPyIter(src));
+        }
+
         //    """ TBSK信号からnビットのint値配列を復元します。
         //        関数は信号を検知する迄制御を返しません。信号を検知せずにストリームが終了した場合はNoneを返します。
         //    """
-        public ISequentialEnumerable<int>? DemodulateAsInt(IEnumerable<double> src, int bitwidth = 8)
+        public ISequentialEnumerable<int>? DemodulateAsInt(IPyIterator<double> src, int bitwidth = 8)
         {
             Debug.Assert(!this._asmethod_lock);
             ISequentialEnumerable<int> builder(TraitBlockDecoder src) => Functions.ToEnumerable<int>(new BitsWidthFilter(1, bitwidth).SetInput(src));
-            AsyncMethod<ISequentialEnumerable<int>?> asmethod = new AsyncDemodulateX<int>(this, new PyIterator<double>(src), builder);
+            AsyncMethod<ISequentialEnumerable<int>?> asmethod = new AsyncDemodulateX<int>(this, src, builder);
             if (asmethod.Run())
             {
                 return asmethod.Result;
@@ -448,15 +453,20 @@ namespace jp.nyatla.kokolink.protocol.tbsk.tbaskmodem
                 throw new AsyncMethodRecoverException<AsyncMethod<ISequentialEnumerable<int>?>, ISequentialEnumerable<int>?>(asmethod);
             }
         }
+        public ISequentialEnumerable<int>? DemodulateAsInt(IEnumerable<double> src, int bitwidth = 8)
+        {
+            return this.DemodulateAsInt(Functions.ToPyIter(src), bitwidth: bitwidth);
+        }
+
         //    """ TBSK信号からバイト単位でbytesを返します。
         //        途中でストリームが終端した場合、既に読みだしたビットは破棄されます。
         //        関数は信号を検知する迄制御を返しません。信号を検知せずにストリームが終了した場合はNoneを返します。   
         //    """
-        public ISequentialEnumerable<byte>? DemodulateAsBytes(IEnumerable<double> src)
+        public ISequentialEnumerable<byte>? DemodulateAsBytes(IPyIterator<double> src)
         {
             Debug.Assert(!this._asmethod_lock);
             ISequentialEnumerable<byte> builder(TraitBlockDecoder src) => Functions.ToEnumerable<byte>(new Bits2BytesFilter(input_bits: 1).SetInput(src));
-            AsyncMethod<ISequentialEnumerable<byte>?> asmethod = new AsyncDemodulateX<byte>(this, new PyIterator<double>(src), builder);
+            AsyncMethod<ISequentialEnumerable<byte>?> asmethod = new AsyncDemodulateX<byte>(this, src, builder);
             if (asmethod.Run())
             {
                 return asmethod.Result;
@@ -467,16 +477,20 @@ namespace jp.nyatla.kokolink.protocol.tbsk.tbaskmodem
                 throw new AsyncMethodRecoverException<AsyncMethod<ISequentialEnumerable<byte>?>, ISequentialEnumerable<byte>?>(asmethod);
             }
         }
+        public ISequentialEnumerable<byte>? DemodulateAsBytes(IEnumerable<double> src)
+        {
+            return this.DemodulateAsBytes(Functions.ToPyIter(src));
+        }
 
         //    """ TBSK信号からsize文字単位でstrを返します。
         //        途中でストリームが終端した場合、既に読みだしたビットは破棄されます。
         //        関数は信号を検知する迄制御を返しません。信号を検知せずにストリームが終了した場合はNoneを返します。
         //    """
-        public ISequentialEnumerable<char>? DemodulateAsStr(IEnumerable<double> src,string encoding="utf-8")
+        public ISequentialEnumerable<char>? DemodulateAsStr(IPyIterator<double> src,string encoding="utf-8")
         {
             Debug.Assert(!this._asmethod_lock);
             ISequentialEnumerable<char> builder(TraitBlockDecoder src) => Functions.ToEnumerable<char>(new Bits2StrFilter(input_bits: 1, encoding: encoding).SetInput(src));
-            AsyncMethod<ISequentialEnumerable<char>?> asmethod = new AsyncDemodulateX<char>(this, new PyIterator<double>(src), builder);
+            AsyncMethod<ISequentialEnumerable<char>?> asmethod = new AsyncDemodulateX<char>(this, src, builder);
             if (asmethod.Run())
             {
                 return asmethod.Result;
@@ -487,12 +501,17 @@ namespace jp.nyatla.kokolink.protocol.tbsk.tbaskmodem
                 throw new AsyncMethodRecoverException<AsyncMethod<ISequentialEnumerable<char>?>, ISequentialEnumerable<char>?>(asmethod);
             }
         }
+        public ISequentialEnumerable<char>? DemodulateAsStr(IEnumerable<double> src, string encoding = "utf-8")
+        {
+            return this.DemodulateAsStr(Functions.ToPyIter(src), encoding: encoding);
+        }
 
-        public ISequentialEnumerable<string>? DemodulateAsHexStr(IEnumerable<double> src)
+
+        public ISequentialEnumerable<string>? DemodulateAsHexStr(IPyIterator<double> src)
         {
             Debug.Assert(!this._asmethod_lock);
             ISequentialEnumerable<string> builder(TraitBlockDecoder src) => Functions.ToEnumerable<string>(new Bits2HexStrFilter(input_bits: 1).SetInput(src));
-            AsyncMethod<ISequentialEnumerable<string>?> asmethod = new AsyncDemodulateX<string>(this, new PyIterator<double>(src), builder);
+            AsyncMethod<ISequentialEnumerable<string>?> asmethod = new AsyncDemodulateX<string>(this, src, builder);
             if (asmethod.Run())
             {
                 return asmethod.Result;
@@ -502,6 +521,10 @@ namespace jp.nyatla.kokolink.protocol.tbsk.tbaskmodem
                 this._asmethod_lock = true;// #解放はAsyncDemodulateXのcloseで
                 throw new AsyncMethodRecoverException<AsyncMethod<ISequentialEnumerable<string>?>, ISequentialEnumerable<string>?>(asmethod);
             }
+        }
+        public ISequentialEnumerable<string>? DemodulateAsHexStr(IEnumerable<double> src)
+        {
+            return this.DemodulateAsHexStr(Functions.ToPyIter(src));
         }
 
     }

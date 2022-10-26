@@ -7,15 +7,29 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "libtbskmodem", "libtbskmode
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "getstarted", "getstarted", "{03820225-A674-4791-8077-35236AC931CF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "step2_demodulate", "step2_demodulate\step2_demodulate.csproj", "{146C2443-2EA9-42FE-AF31-F3D9E3DA729F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "step2_demodulate", "step2_demodulate\step2_demodulate.csproj", "{146C2443-2EA9-42FE-AF31-F3D9E3DA729F}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "step1_modulate", "step1_modulate\step1_modulate.csproj", "{0DB05030-FBB6-40BD-B139-577602E227ED}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "step3_bytedata", "step3_bytedata\step3_bytedata.csproj", "{CAD29069-28A7-4D5B-BF30-B63E9803E7BA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "step3_bytedata", "step3_bytedata\step3_bytedata.csproj", "{CAD29069-28A7-4D5B-BF30-B63E9803E7BA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "step4_text", "step4_text\step4_text.csproj", "{B9626E47-1B09-48DB-9E9B-43015BE9B799}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "step4_text", "step4_text\step4_text.csproj", "{B9626E47-1B09-48DB-9E9B-43015BE9B799}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "step5_microphone", "step5_microphone\step5_microphone.csproj", "{2CE40E22-344E-41B7-906A-74CD6F550A06}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "step5_microphone", "step5_microphone\step5_microphone.csproj", "{2CE40E22-344E-41B7-906A-74CD6F550A06}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NAudioIF", "NAudioIF\NAudioIF.csproj", "{C4023E8A-40E3-4B83-8858-B1FE2E5CE140}"
+	ProjectSection(ProjectDependencies) = postProject
+		{19F98168-14B3-45A1-8B85-F5CEFD995764} = {19F98168-14B3-45A1-8B85-F5CEFD995764}
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "step6_realtime_receive", "step6_realtime_receive\step6_realtime_receive.csproj", "{919E3071-F765-4E29-B88D-4815D5A1BB8B}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Readme", "Readme", "{8FE35D26-55CE-4257-8602-150719AE8F74}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\LICENSE = ..\..\LICENSE
+		..\..\Readme.en.md = ..\..\Readme.en.md
+		..\..\Readme.md = ..\..\Readme.md
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -47,6 +61,14 @@ Global
 		{2CE40E22-344E-41B7-906A-74CD6F550A06}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2CE40E22-344E-41B7-906A-74CD6F550A06}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2CE40E22-344E-41B7-906A-74CD6F550A06}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C4023E8A-40E3-4B83-8858-B1FE2E5CE140}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C4023E8A-40E3-4B83-8858-B1FE2E5CE140}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C4023E8A-40E3-4B83-8858-B1FE2E5CE140}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C4023E8A-40E3-4B83-8858-B1FE2E5CE140}.Release|Any CPU.Build.0 = Release|Any CPU
+		{919E3071-F765-4E29-B88D-4815D5A1BB8B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{919E3071-F765-4E29-B88D-4815D5A1BB8B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{919E3071-F765-4E29-B88D-4815D5A1BB8B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{919E3071-F765-4E29-B88D-4815D5A1BB8B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -57,6 +79,7 @@ Global
 		{CAD29069-28A7-4D5B-BF30-B63E9803E7BA} = {03820225-A674-4791-8077-35236AC931CF}
 		{B9626E47-1B09-48DB-9E9B-43015BE9B799} = {03820225-A674-4791-8077-35236AC931CF}
 		{2CE40E22-344E-41B7-906A-74CD6F550A06} = {03820225-A674-4791-8077-35236AC931CF}
+		{919E3071-F765-4E29-B88D-4815D5A1BB8B} = {03820225-A674-4791-8077-35236AC931CF}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {F5DAC155-8AC7-4201-BB27-40A13FC6A4B5}

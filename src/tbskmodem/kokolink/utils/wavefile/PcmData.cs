@@ -94,7 +94,7 @@ namespace jp.nyatla.kokolink.utils.wavefile{
 
         public static void Dump(PcmData src,Stream fp,IEnumerable<Chunk>? chunks=null){
             // # setting parameters
-            var wf=new WaveFile((int)src.Frame_rate,(int)(src.Sample_bits/8),1,src.Data,chunks);
+            var wf=new WaveFile((int)src.Framerate,(int)(src.SampleBits/8),1,src.Data,chunks);
             fp.Write(wf.ToChunkBytes());
         }
         readonly private int _sample_bits;
@@ -116,7 +116,7 @@ namespace jp.nyatla.kokolink.utils.wavefile{
 
         // """サンプリングビット数
         // """
-        public int Sample_bits{
+        public int SampleBits{
             get=>this._sample_bits;
         }
         // @property
@@ -124,7 +124,7 @@ namespace jp.nyatla.kokolink.utils.wavefile{
         //     """サンプリングのフレームレート
         //     """
         //     return self._frame_rate
-        public uint Frame_rate{
+        public uint Framerate{
             get=>this._frame_rate;
         }
         // @property
