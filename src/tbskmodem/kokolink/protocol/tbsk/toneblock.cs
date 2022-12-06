@@ -54,7 +54,7 @@ namespace jp.nyatla.kokolink.protocol.tbsk.toneblock
         {
             var tone = base_tone != null ? base_tone : new SinTone(20, 1);
             var a = new List<double>();
-            foreach (var i in mseq.GetOneCycle())
+            foreach (var i in mseq.GenOneCycle())
             {
                 foreach (var j in tone)
                 {
@@ -65,7 +65,7 @@ namespace jp.nyatla.kokolink.protocol.tbsk.toneblock
         }
         public MSeqTone(MSequence mseq, TraitTone? base_tone = null) : base(_constructor_init(mseq, base_tone))
         {
-            this._sequence = mseq.GetOneCycle();
+            this._sequence = mseq.GenOneCycle();
         }
 
         public MSeqTone(int bits,int tap,TraitTone? base_tone=null):this(new MSequence(bits, tap), base_tone)

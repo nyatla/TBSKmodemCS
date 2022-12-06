@@ -70,7 +70,7 @@ namespace jp.nyatla.kokolink.utils.math
         //     """1サイクル分のシーケンスを得ます
         //     """
         //     return self.gets(self.cycles())
-        public IEnumerable<int> GetOneCycle(){
+        public IEnumerable<int> GenOneCycle(){
             return this.Gets(this.Cycles());
         }
         // def cycles(self)->int:

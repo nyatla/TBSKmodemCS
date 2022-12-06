@@ -1,41 +1,23 @@
 using jp.nyatla.kokolink.interfaces;
-using jp.nyatla.kokolink.utils;
 using jp.nyatla.kokolink.utils.recoverable;
 using jp.nyatla.kokolink.streams.rostreams;
 using jp.nyatla.kokolink.utils.math.corrcoef;
 using jp.nyatla.kokolink.types;
+using jp.nyatla.kokolink.utils;
 using jp.nyatla.kokolink.protocol.tbsk.toneblock;
-using System.Runtime.InteropServices;
+
 
 namespace jp.nyatla.kokolink.protocol.tbsk.traitblockcoder
 {
-    // """ 末尾からticksまでの平均値を連続して返却します。
-    //     このイテレータはRecoverableStopInterationを利用できます。
-    // """
-    class AverageInterator:SumIterator{
-        private int _length;
-        public AverageInterator(IPyIterator<double> src,int ticks):base(src,ticks)
-        {
-            this._length=ticks;
-        }
-        override public double Next(){
-            double r;
-            try{
-                r = base.Next();
-            }catch(RecoverableStopIteration e){
-                throw e;
-            }
-            return r/this._length;
-        }
-    }
+
 
     // """ ビット列をTBSK変調した振幅信号に変換します。出力レートは入力のN倍になります。
     //     N=len(trait_block)*2*len(tone)
     //     このクラスは、toneを一単位とした信号とtrail_blockとの積を返します。
     // """
     public class TraitBlockEncoder: BasicRoStream<double>,IEncoder<TraitBlockEncoder,IBitStream, double>{
-        private int _pos;
-        private List<int> _sblock;
+        private Int64 _pos;
+        private readonly List<int> _sblock;
         private TraitTone _btone;
         private Queue<double> _tone_q;
         private IBitStream? _src;
@@ -90,7 +72,8 @@ namespace jp.nyatla.kokolink.protocol.tbsk.traitblockcoder
             return r;
         }
         // @property
-        override public int Pos{
+        override public Int64 Pos
+        {
             get=>this._pos;
         }
     }
@@ -100,11 +83,11 @@ namespace jp.nyatla.kokolink.protocol.tbsk.traitblockcoder
     // """
     public class TraitBlockDecoder: BasicRoStream<int>,IBitStream,IDecoder<TraitBlockDecoder,IRoStream<double>,int>
     {
-        private int _trait_block_ticks;
+        private readonly int _trait_block_ticks;
         private AverageInterator? _avefilter;
         readonly private double _threshold;
         private bool _is_eos;
-        private int _pos;
+        private Int64 _pos;
         readonly private List<double> _samples;
         private SelfCorrcoefIterator? _cof;
         private double _last_data;
@@ -251,7 +234,8 @@ namespace jp.nyatla.kokolink.protocol.tbsk.traitblockcoder
             }
         }
         // @property
-        override public int Pos{
+        override public Int64 Pos
+        {
             get=>this._pos;
         }
     }

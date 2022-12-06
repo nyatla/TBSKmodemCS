@@ -1,14 +1,7 @@
-using System.Collections.ObjectModel;
-using System.Linq;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
-using System.Collections;
 using jp.nyatla.kokolink.compatibility;
 using jp.nyatla.kokolink.types;
-using System.Threading.Channels;
-using Microsoft.VisualBasic;
+
 
 namespace jp.nyatla.kokolink.utils.wavefile.riffio
 {

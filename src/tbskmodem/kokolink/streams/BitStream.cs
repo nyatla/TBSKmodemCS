@@ -11,7 +11,7 @@ using jp.nyatla.kokolink.compatibility;
 namespace jp.nyatla.kokolink.streams{
     class BitStream:BasicRoStream<int>,IBitStream
     {
-        private int _pos;
+        private Int64 _pos;
         readonly private BitsWidthConvertIterator _bw;
         // """ 任意ビット幅のintストリームを1ビット単位のビットストリームに展開します。
         // """
@@ -34,7 +34,8 @@ namespace jp.nyatla.kokolink.streams{
             return r;
         }
         // @property
-        override public int Pos{
+        override public Int64 Pos
+        {
             get=>this._pos;
         }
     }

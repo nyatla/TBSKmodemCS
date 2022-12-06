@@ -35,7 +35,7 @@ namespace jp.nyatla.kokolink.interfaces
         //     """ストリーム上の現在の読み出し位置です。get/getsで読み出した要素数+seekで読み出した要素数の合計です。
         //     """
         //     pass
-        int Pos{
+        Int64 Pos{
             get;
         }
     }

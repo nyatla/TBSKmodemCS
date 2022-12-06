@@ -11,11 +11,34 @@ using jp.nyatla.kokolink.utils.recoverable;
 using jp.nyatla.kokolink.compatibility;
 using jp.nyatla.kokolink.protocol.tbsk.toneblock;
 using jp.nyatla.kokolink.protocol.tbsk.traitblockcoder;
-using System.Runtime.InteropServices;
+
 
 namespace jp.nyatla.kokolink.protocol.tbsk.preamble
 {
 
+    public class PreambleBits : TraitBlockEncoder
+    {
+        public PreambleBits(TraitTone symbol,int cycle) :base(symbol)
+        {
+            var b = Functions.Repeat(cycle, 1);// [1]*self._cycle;
+            var c = new List<int>();
+            //var c =[i % 2 for i in range(this._cycle)];
+            for (var i = 0; i< cycle; i++)
+            {
+                c.Add(i % 2);
+            }
+            //var d =[(1 + c[-1]) % 2, (1 + c[-1]) % 2, c[-1],];
+            var d = new int[] { (1 + c.Last()) % 2, (1 + c.Last()) % 2, c.Last() };
+            //var w = new BitStream(Functions.Flatten(new int[] { 0, 1 }, b, new int[] { 1 }, c, d), bitwidth: 1);
+            //var w2=Functions.ToEnumerable(w);
+            //Console.WriteLine(w2.Count());
+            this.SetInput(new BitStream(Functions.Flatten(new int[] { 0, 1 }, b, new int[] { 1 }, c, d),bitwidth: 1));
+            // return enc.SetInput(new BitStream([0, 1] + b +[1] + c + d, 1));
+            // # return enc.setInput(BitStream([0,1]+[1,1]+[1]+[0,1]+[0,0,1],1))
+            // # return enc.setInput(BitStream([0,1,1,1,1,0,1,0,0,1],1))
+        }
+
+    }
     // """ 台形反転信号プリアンブルです。
     // """
     public class CoffPreamble:Preamble
@@ -34,26 +57,10 @@ namespace jp.nyatla.kokolink.protocol.tbsk.preamble
         }
 
         public IRoStream<double> GetPreamble(){
-            var enc=new TraitBlockEncoder(this._symbol);
-            var b =  Functions.Repeat(this._cycle, 1);// [1]*self._cycle;
-            var c = new List<int>();
-            //var c =[i % 2 for i in range(this._cycle)];
-            for (var i = 0; i < this._cycle; i++)
-            {
-                c.Add(i % 2);
-            }
-            //var d =[(1 + c[-1]) % 2, (1 + c[-1]) % 2, c[-1],];
-            var d = new int[] { (1 + c.Last()) % 2, (1 + c.Last()) % 2, c.Last() };
-            //var w = new BitStream(Functions.Flatten(new int[] { 0, 1 }, b, new int[] { 1 }, c, d), bitwidth: 1);
-            //var w2=Functions.ToEnumerable(w);
-            //Console.WriteLine(w2.Count());
-            return enc.SetInput(new BitStream(Functions.Flatten(new int[] { 0, 1 }, b, new int[] { 1 }, c, d),bitwidth:1));
-            // return enc.SetInput(new BitStream([0, 1] + b +[1] + c + d, 1));
-            // # return enc.setInput(BitStream([0,1]+[1,1]+[1]+[0,1]+[0,0,1],1))
-            // # return enc.setInput(BitStream([0,1,1,1,1,0,1,0,0,1],1))
+            return new PreambleBits(this._symbol,this._cycle);
         }
 
-        class ASwaitForSymbol : AsyncMethod<int?>{
+        public class WaitForSymbolAS : AsyncMethod<int?>{
             readonly private CoffPreamble _parent;
             readonly private BufferedIterator<double> _cof;
             readonly private AverageInterator _avi;
@@ -68,7 +75,7 @@ namespace jp.nyatla.kokolink.protocol.tbsk.preamble
             private int? _result;
             private bool _closed;
 
-            public ASwaitForSymbol(CoffPreamble parent,IRoStream<double> src):base()
+            public WaitForSymbolAS(CoffPreamble parent,IRoStream<double> src):base()
             {
                 var symbol_ticks = parent._symbol.Count;
                 //#後で見直すから10シンボル位記録しておく。
@@ -225,8 +232,7 @@ namespace jp.nyatla.kokolink.protocol.tbsk.preamble
                             var cofbuf_len = this._cofbuf_len;
                             var cycle = this._parent._cycle;
 
-                            //# print(4,self._nor,rb.tail,rb.top,self._gap)
-                            //# print(3,self._nor)
+
                             //# #ピーク周辺の読出し
                             //# [next(cof) for _ in range(symbol_ticks//4)]
                             //# バッファリングしておいた相関値に3値平均フィルタ
@@ -240,18 +246,20 @@ namespace jp.nyatla.kokolink.protocol.tbsk.preamble
                             //var b.sort(key = lambda x: x[1], reverse = True);
                             b.Sort((a, b) => a.Item2 == b.Item2 ? 0 : (a.Item2 < b.Item2 ? 1 : -1));
 
+
+
                             //#ピークを基準に詳しく様子を見る。
                             var peak_pos = b[0].Item1;//b[0][0];
                             //# print(peak_pos-symbol_ticks*3,(self._nor-(peak_pos+symbol_ticks*3)))
+
                             //# Lレベルシンボルの範囲を得る
-                            //# s=peak_pos-symbol_ticks*3-(self._nor-cofbuf_len)
                             var s = peak_pos - symbol_ticks * sample_width - (this._nor - cofbuf_len);
                             var lw = cof.Buf.Sublist(s, cycle * symbol_ticks);
                             Array.Sort(lw);//cof.buf[s: s + cycle * symbol_ticks]
-                            lw = lw.Take(lw.Length * 3 / 2 + 1).ToArray(); //lw[:len(lw) * 3 / 2 + 1];
+                            // 実装ミスで機能してないからコメントアウト
+                            //lw = lw.Take(lw.Length * 3 / 2 + 1).ToArray(); //lw[:len(lw) * 3 / 2 + 1];
                             if (lw.Sum() / lw.Length > lw[0] * 0.66)
                             {
-                                //# print("ERR(L",peak_pos+src.pos,sum(lw)/len(lw),min(lw))
                                 this._co_step = 0;//#co_step0からやり直す。
                                 continue;// #バラツキ大きい
                             }
@@ -261,7 +269,8 @@ namespace jp.nyatla.kokolink.protocol.tbsk.preamble
                             var lh = cof.Buf.Sublist(s, cycle * symbol_ticks);
                             Array.Sort(lh);
                             Array.Reverse(lh);
-                            lh = lh.Take(lh.Length * 3 / 2 + 1).ToArray(); //lh = lh[:len(lh) * 3 / 2 + 1]
+                            // 実装ミスで機能してないからコメントアウト
+                            //lh = lh.Take(lh.Length * 3 / 2 + 1).ToArray(); //lh = lh[:len(lh) * 3 / 2 + 1]
 
                             if (lh.Sum() / lh.Length < lh[0] * 0.66)
                             {
@@ -301,7 +310,7 @@ namespace jp.nyatla.kokolink.protocol.tbsk.preamble
         public int? WaitForSymbol(IRoStream<double> src)
         {
             Debug.Assert(!this._asmethtod_lock);
-            var asmethtod = new ASwaitForSymbol(this, src);
+            var asmethtod = new WaitForSymbolAS(this, src);
             if (asmethtod.Run())
             {
                 return asmethtod.Result;
@@ -310,7 +319,7 @@ namespace jp.nyatla.kokolink.protocol.tbsk.preamble
             {
                 //# ロックする（解放はASwaitForSymbolのclose内で。）
                 this._asmethtod_lock = true;
-                throw new AsyncMethodRecoverException<ASwaitForSymbol, int?>(asmethtod);
+                throw new RecoverableException<WaitForSymbolAS, int?>(asmethtod);
             }
         }
     }

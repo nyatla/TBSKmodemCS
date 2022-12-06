@@ -12,7 +12,7 @@ namespace jp.nyatla.kokolink.filter
     class BitsWidthFilter:BasicRoStream<int>,IFilter<BitsWidthFilter,IRoStream<int>,int>
     {
         
-        private int _pos;
+        private Int64 _pos;
         private int _input_bits;
         private int _output_bits;
         private BitsWidthConvertIterator? _iter;
@@ -39,7 +39,8 @@ namespace jp.nyatla.kokolink.filter
             return r;
         }
         // @property
-        override public int Pos{
+        override public Int64 Pos
+        {
             get=>this._pos;
         }
     }

@@ -16,7 +16,7 @@ namespace jp.nyatla.kokolink.filter
     // """
     class Bits2StrFilter : BasicRoStream<char>, IFilter<Bits2StrFilter, IRoStream<int>, char>
     {
-        private int _pos;
+        private Int64 _pos;
         private int _input_bits;
         readonly private string _encoding;
         private IList<byte> _savedata;
@@ -64,7 +64,7 @@ namespace jp.nyatla.kokolink.filter
                 }
             }
         }
-        override public int Pos
+        override public Int64 Pos
         {
             get => this._pos;
         }

@@ -8,7 +8,7 @@ namespace jp.nyatla.kokolink.streams{
     // """
     class RoStream<T>:BasicRoStream<T>{
         readonly private IPyIterator<T> _src;
-        private int _pos;
+        private Int64 _pos;
         public RoStream(IPyIterator<T> src):base()
         {
             this._src=src;
@@ -24,7 +24,8 @@ namespace jp.nyatla.kokolink.streams{
             this._pos+=1;
             return r;
         }
-        override public int Pos{
+        override public Int64 Pos
+        {
             get=>this._pos;
         }
     }

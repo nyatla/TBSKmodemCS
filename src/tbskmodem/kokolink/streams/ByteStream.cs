@@ -6,7 +6,7 @@ using jp.nyatla.kokolink.streams.bytestreams;
 namespace jp.nyatla.kokolink.streams{
 
 
-    class ByteStream:BasicByteStream,IByteStream{
+    class ByteStream:BasicByteStream{
         class ByteCastIter : IPyIterator<int>
         {
             readonly private IPyIterator<byte>  _src;
@@ -26,7 +26,7 @@ namespace jp.nyatla.kokolink.streams{
             }
         }
 
-        private int _pos;
+        private Int64 _pos;
         readonly private IPyIterator<int> _iter;
         // """ iterをラップするByteStreamストリームを生成します。
         //     bytesの場合は1バイトづつ返します。
@@ -47,7 +47,8 @@ namespace jp.nyatla.kokolink.streams{
             this._pos=this._pos+1;
             return r;
         }
-        override public int Pos{
+        override public Int64 Pos
+        {
             get=>this._pos;
         }
     }

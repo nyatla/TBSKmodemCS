@@ -25,10 +25,27 @@ namespace jp.nyatla.kokolink.utils.recoverable{
 
     //     再実行しない場合は、例外ハンドラでclose関数で再試行セッションを閉じてください。
     // """
-    abstract public class RecoverableException<T>:Exception,IDisposable{
+    public class RecoverableException<T,V> : Exception, IDisposable where T :AsyncMethod<V>
+    {
+        private T? _recover_instance;
+        public RecoverableException(T recover_instance)
+        {
+            this._recover_instance=recover_instance;
+        }
+        public T Detach()
+        {
+            if (this._recover_instance == null)
+            {
+                throw new Exception();
+
+            }
+            var r = this._recover_instance;
+            this._recover_instance = null;
+            return r;
+        }
+
         // """ 関数を再試行します。再試行可能な状態で失敗した場合は、自分自信を返します。
         // """
-        abstract public T Recover();
         public void Dispose(){
             try
             {
@@ -39,80 +56,14 @@ namespace jp.nyatla.kokolink.utils.recoverable{
                 GC.SuppressFinalize(this);
             }
         }
-        abstract public void Close();
+        public void Close()
+        {
+            if (this._recover_instance != null)
+            {
+                this._recover_instance.Close();
+            }
+        }
     }
 
 
-    class AsyncMethodRecoverException<ASMETHOD,T> : RecoverableException<T> where ASMETHOD:AsyncMethod<T>
-    {
-        private ASMETHOD? _asmethod;
-
-        //""" AsyncMethodをラップするRecoverExceptionです。
-        //    Recoverableをgeneratorで実装するときに使います。
-
-        //    このクラスは、(exception, T) を返すgeneratorをラップして、recoverで再実行可能な状態にします。
-        //    generatorはnextで再実行可能な状態でなければなりません。
-        //"""
-        public AsyncMethodRecoverException(ASMETHOD asmethod)
-        {
-            this._asmethod = asmethod;
-        }
-        //""" 例外発生元のrunを再実行します。
-        //    例外が発生した場合、closeを実行してそのまま例外を再生成します。
-        //"""
-        override public T Recover()
-        {
-            Debug.Assert(this._asmethod != null);
-            try
-            {
-                if (this._asmethod.Run()) {
-                    //# print("aaaa",self._asmethod.result)
-                    return this._asmethod.Result;
-                }
-            }catch(Exception e)
-            {
-                //# runが例外を発生したときは内部closeに期待する。
-                throw e;
-            }
-            var asmethod = this._asmethod;
-            this._asmethod = null;
-            throw new AsyncMethodRecoverException<ASMETHOD, T>(asmethod);
-        }
-        override public void Close()
-        {
-            Debug.Assert(this._asmethod != null);
-            try {
-                this._asmethod.Close();
-            }
-            finally {
-                this._asmethod = null;
-            }
-
-        }
-
-    }
-
-    // class NoneRestrictIteraor(IRecoverableIterator[T]):
-    //     """ Noneの混在したストリームで、Noneを検出するたびにRecoverableStopInterationを発生します。
-    //         None混在の一般IteratorをIRecoverableIteratorに変換します。
-    //     """
-    //     def __init__(self,iter:Iterator[T]):
-    //         self._iter=iter
-    //     def __next__(self) ->T:
-    //         r=next(self._iter)
-    //         if r is None:
-    //             raise RecoverableStopIteration()
-    //         return r
-    // class SkipRecoverIteraor(Iterator[T]):
-    //     """ IRecoverableIteratorを一般Iteratorをに変換します。
-    //     """
-    //     def __init__(self,iter:Iterator):
-    //         self._iter=iter
-    //     def __next__(self) ->T:
-    //         while True:
-    //             try:
-    //                 return next(self._iter)
-    //             except RecoverableStopIteration:
-    //                 # print("skip")
-    //                 continue
 }

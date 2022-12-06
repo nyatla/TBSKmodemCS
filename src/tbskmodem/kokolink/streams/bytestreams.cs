@@ -39,7 +39,7 @@ namespace jp.nyatla.kokolink.streams.bytestreams{
 
         abstract override public int Next();
 
-        abstract override public int Pos { get; }
+        abstract override public Int64 Pos { get; }
     }
 }
 

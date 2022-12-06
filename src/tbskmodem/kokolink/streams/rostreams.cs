@@ -17,7 +17,7 @@ namespace jp.nyatla.kokolink.streams.rostreams
             this._savepoint=new Queue<T>();
         }
         public T Get(){
-            if(this._savepoint.Count>0 && this._savepoint.Count>0){
+            if(this._savepoint.Count>0){
                 // #読出し済みのものがあったらそれを返す。
                 var r=this._savepoint.Dequeue();
                 // this._savepoint=self._savepoint[1:]
@@ -61,7 +61,7 @@ namespace jp.nyatla.kokolink.streams.rostreams
             }
             return;
         }
-        abstract public int Pos
+        abstract public Int64 Pos
         {
             get;
         }

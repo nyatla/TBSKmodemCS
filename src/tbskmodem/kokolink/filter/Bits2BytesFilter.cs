@@ -18,7 +18,7 @@ namespace jp.nyatla.kokolink.filter
     // """
     class Bits2BytesFilter : BasicRoStream<byte>, IFilter<Bits2BytesFilter, IRoStream<int>, byte>
     {
-        private int _pos;
+        private Int64 _pos;
         readonly private int _input_bits;
         private IPyIterator<int>? _iter;
 
@@ -30,7 +30,7 @@ namespace jp.nyatla.kokolink.filter
         public Bits2BytesFilter SetInput(IRoStream<int> src)
         {
             this._pos = 0;
-            this._iter = src == null ? src : new BitsWidthConvertIterator(src, this._input_bits, 8);
+            this._iter = src == null ? null : new BitsWidthConvertIterator(src, this._input_bits, 8);
             return this;
         }
         override public byte Next()
@@ -44,7 +44,7 @@ namespace jp.nyatla.kokolink.filter
             return (byte)r;
 
         }
-        override public int Pos
+        override public Int64 Pos
         {
             get=>this._pos;
         }
