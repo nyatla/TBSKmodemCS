@@ -12,11 +12,8 @@ namespace jp.nyatla.kokolink.types
     /*
     IIteratorはPythonのIteratorのエミュレーションインタフェイスです。
     */
-    public interface IPyIterator<T>:Py__next__<T>{
-        //sealed void Reset()
-        //{
-        //    throw NotSupportedException();
-        //}
+    public interface IPyIterator<T>{
+        T Next();
     }
 
 
