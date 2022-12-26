@@ -10,7 +10,7 @@ namespace jp.nyatla.kokolink.utils{
 
 
 
-    public class RingBuffer<T>:Py__repr__,Py__len__{
+    public class RingBuffer<T>{
         private T[] _buf;
         private int _p;
 
@@ -146,11 +146,7 @@ namespace jp.nyatla.kokolink.utils{
         public int Length{
             get=>this._buf.Length;
         }
-        // def __repr__(self)->str:
-        //     return str(self._buf)
-        public string __repr__{
-            get=>"this._buf";
-        }
+
     }
 
 }

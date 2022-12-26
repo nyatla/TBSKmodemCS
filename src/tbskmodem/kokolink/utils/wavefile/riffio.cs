@@ -7,7 +7,7 @@ namespace jp.nyatla.kokolink.utils.wavefile.riffio
 {
     // """チャンクのベースクラス。
     // """
-    abstract public class Chunk :Py__str__{
+    abstract public class Chunk{
         protected readonly byte[] _name;
         protected readonly int _size;
         // def __init__(self,name:bytes,size:int):
@@ -447,7 +447,7 @@ namespace jp.nyatla.kokolink.utils.wavefile.riffio
         //}
     }
 
-    class WaveFile:RiffHeader,Py__str__{
+    class WaveFile:RiffHeader{
         readonly private IList<Chunk> _chunks;
 
 
