@@ -55,6 +55,7 @@ namespace jp.nyatla.kokolink.utils.math.corrcoef
             {
                 this._srcy.Enqueue(0);//extend([0]);
             }
+            return;
         }
         public double Next()
         {

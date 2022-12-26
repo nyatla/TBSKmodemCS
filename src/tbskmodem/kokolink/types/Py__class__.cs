@@ -1,5 +1,5 @@
-using System.Collections.Generic;
-using jp.nyatla.kokolink.compatibility;
+
+
 
 namespace jp.nyatla.kokolink.types
 {
@@ -9,12 +9,31 @@ namespace jp.nyatla.kokolink.types
         public PyStopIteration(Exception innerException) : base("", innerException) { }
     }
 
-    /*
-    IIteratorはPythonのIteratorのエミュレーションインタフェイスです。
-    */
-    public interface IPyIterator<T>{
-        T Next();
+    sealed public class PyIterator<T> : IPyIterator<T>
+    {
+
+        readonly private IEnumerator<T> _src;
+        public PyIterator(IEnumerable<T> src)
+        {
+            this._src = src.GetEnumerator();
+        }
+
+        public PyIterator(IEnumerator<T> src)
+        {
+            this._src = src;
+
+        }
+        public T Next()
+        {
+            if (!this._src.MoveNext())
+            {
+                throw new PyStopIteration();
+            }
+            return this._src.Current;
+        }
     }
+
+
 
 
     // IPyIteratorを連結するイテレータ

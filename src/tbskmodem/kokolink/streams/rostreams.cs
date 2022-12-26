@@ -31,7 +31,8 @@ namespace jp.nyatla.kokolink.streams.rostreams
         public IEnumerable<T> Gets(int maxsize,bool fillup=false){
             var r=this._savepoint;
             try{
-                for(var i=0;i<maxsize-r.Count;i++){
+                int len= maxsize - r.Count;
+                for (var i=0;i<len;i++){
                     r.Enqueue(this.Next());
                 }
             }catch(RecoverableStopIteration e){
@@ -43,7 +44,7 @@ namespace jp.nyatla.kokolink.streams.rostreams
                     throw e;
                 }
             }
-            Debug.Assert(r.Count<maxsize);
+            Debug.Assert(r.Count<=maxsize);
             var ret=new List<T>();
             while(r.Count>0){
                 ret.Add(r.Dequeue());

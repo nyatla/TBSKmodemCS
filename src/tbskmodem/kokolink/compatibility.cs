@@ -112,29 +112,7 @@ namespace jp.nyatla.kokolink.compatibility
         }
     }
 
-    sealed public class PyIterator<T> : IPyIterator<T>
-    {
 
-        readonly private IEnumerator<T> _src;
-        public PyIterator(IEnumerable<T> src)
-        {
-            this._src = src.GetEnumerator();
-        }
-
-        public PyIterator(IEnumerator<T> src)
-        {
-            this._src = src;
-
-        }
-        public T Next()
-        {
-            if (!this._src.MoveNext())
-            {
-                throw new PyStopIteration();
-            }
-            return this._src.Current;
-        }
-    }
 
 
 
