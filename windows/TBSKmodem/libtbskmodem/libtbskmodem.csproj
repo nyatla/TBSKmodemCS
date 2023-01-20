@@ -12,6 +12,11 @@
 	</ItemGroup>
 
 
+	<ItemGroup>
+	  <Compile Remove="..\..\..\src\tbskmodem\kokolink\types\Py__special_functions__.cs" />
+	</ItemGroup>
+
+
 
 
 </Project>
