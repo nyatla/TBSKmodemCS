@@ -145,14 +145,14 @@ namespace jp.nyatla.kokolink.protocol.tbsk.tbaskmodem
             //         tone
             //             特徴シンボルのパターンです。
             // """
-            this._tone = tone;
-            this._preamble = (preamble != null) ? preamble : new CoffPreamble(this._tone);
+            this._preamble = (preamble != null) ? preamble : new CoffPreamble(tone);
             this._enc = new TraitBlockEncoder(tone);
+            this._tone = tone;
         }
         public ISequentialEnumerable<double> ModulateAsBit(IPyIterator<int> src)
         {
             var ave_window_shift = Math.Max((int)(this._tone.Count * 0.1), 2) / 2; //#検出用の平均フィルタは0.1*len(tone)//2だけずれてる。ここを直したらTraitBlockDecoderも直せ
-            return Functions.ToEnumerable<double>(new IterChain<double>(
+            return SequentialEnumerable<double>.CreateInstance(new IterChain<double>(
                 this._preamble.GetPreamble(),
                 this._enc.SetInput(new DiffBitEncoder(0, new BitStream(src, 1))),
                 new Repeater<double>(0, ave_window_shift)    //#demodulatorが平均値で補正してる関係で遅延分を足してる。
@@ -412,13 +412,13 @@ namespace jp.nyatla.kokolink.protocol.tbsk.tbaskmodem
         public class DemodulateAsBitAS : AsyncDemodulateX<int>
         {
             public DemodulateAsBitAS(TbskDemodulator parent, IPyIterator<double> src) :
-                base(parent, src, (TraitBlockDecoder src) => Functions.ToEnumerable<int>(src))
+                base(parent, src, (TraitBlockDecoder src) => SequentialEnumerable<int>.CreateInstance(src))
             { }
         }
         public class DemodulateAsIntAS : AsyncDemodulateX<int>
         {
             public DemodulateAsIntAS(TbskDemodulator parent, IPyIterator<double> src, int bitwidth) :
-                base(parent, src, (TraitBlockDecoder src) => Functions.ToEnumerable<int>(new BitsWidthFilter(1, bitwidth).SetInput(src)))
+                base(parent, src, (TraitBlockDecoder src) => SequentialEnumerable<int>.CreateInstance(new BitsWidthFilter(1, bitwidth).SetInput(src)))
             { }
         }
 
@@ -469,19 +469,19 @@ namespace jp.nyatla.kokolink.protocol.tbsk.tbaskmodem
         public class DemodulateAsByteAS : AsyncDemodulateX<byte>
         {
             public DemodulateAsByteAS(TbskDemodulator parent, IPyIterator<double> src) :
-                base(parent, src, (TraitBlockDecoder src) => Functions.ToEnumerable<byte>(new Bits2BytesFilter(input_bits: 1).SetInput(src)))
+                base(parent, src, (TraitBlockDecoder src) => SequentialEnumerable<byte>.CreateInstance(new Bits2BytesFilter(input_bits: 1).SetInput(src)))
             { }
         }
         public class DemodulateAsStrAS : AsyncDemodulateX<char>
         {
             public DemodulateAsStrAS(TbskDemodulator parent, IPyIterator<double> src, string encoding = "utf-8") :
-                base(parent, src, (TraitBlockDecoder src) => Functions.ToEnumerable<char>(new Bits2StrFilter(input_bits: 1, encoding: encoding).SetInput(src)))
+                base(parent, src, (TraitBlockDecoder src) => SequentialEnumerable<char>.CreateInstance(new Bits2StrFilter(input_bits: 1, encoding: encoding).SetInput(src)))
             { }
         }
         public class DemodulateAsHexStrAS : AsyncDemodulateX<string>
         {
             public DemodulateAsHexStrAS(TbskDemodulator parent, IPyIterator<double> src) :
-                base(parent, src, (TraitBlockDecoder src) => Functions.ToEnumerable<string>(new Bits2HexStrFilter(input_bits: 1).SetInput(src)))
+                base(parent, src, (TraitBlockDecoder src) => SequentialEnumerable<string>.CreateInstance(new Bits2HexStrFilter(input_bits: 1).SetInput(src)))
             { }
         }
 
