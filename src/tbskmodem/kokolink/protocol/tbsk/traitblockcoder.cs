@@ -89,7 +89,7 @@ namespace jp.nyatla.kokolink.protocol.tbsk.traitblockcoder
         private bool _is_eos;
         private Int64 _pos;
         readonly private List<double> _samples;
-        private SelfCorrcoefIterator? _cof;
+        private ISelfCorrcoefIterator _cof;
         private double _last_data;
         private int _preload_size;
         private int _block_skip_size;
@@ -117,7 +117,7 @@ namespace jp.nyatla.kokolink.protocol.tbsk.traitblockcoder
             else
             {
                 this._is_eos = false;
-                this._cof = new SelfCorrcoefIterator(this._trait_block_ticks, src, this._trait_block_ticks);
+                this._cof = ISelfCorrcoefIterator.CreateNormalized(this._trait_block_ticks, src, this._trait_block_ticks);
                 var ave_window = Math.Max((int)(this._trait_block_ticks * 0.1), 2);// #検出用の平均フィルタは0.1*len(tone)//2だけずれてる。個々を直したらtbskmodem#TbskModulatorも直せ
                 this._avefilter = new AverageInterator(this._cof, ave_window);
                 this._last_data = 0;
@@ -206,6 +206,7 @@ namespace jp.nyatla.kokolink.protocol.tbsk.traitblockcoder
                 // # print(self._src.pos,r)
                 var th=this._threshold;
                 this._pos=this._pos+1;
+
                 if(r>th){
                     // # print(1,1)
                     this._last_data=r;

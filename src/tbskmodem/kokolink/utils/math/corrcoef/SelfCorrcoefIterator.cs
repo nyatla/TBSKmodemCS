@@ -18,7 +18,7 @@ namespace jp.nyatla.kokolink.utils.math.corrcoef
     //     開始からwindow-shift個の要素は0になります。
     // """
 
-    class SelfCorrcoefIterator : IRecoverableIterator<double>
+    class SelfCorrcoefIterator : ISelfCorrcoefIterator
     {
         readonly private double[]?[] xyi;
         private int c;

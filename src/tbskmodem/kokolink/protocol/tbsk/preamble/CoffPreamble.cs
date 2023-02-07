@@ -82,7 +82,7 @@ namespace jp.nyatla.kokolink.protocol.tbsk.preamble
                 var cofbuf_len = symbol_ticks * (6 + parent._cycle * 2);
                 //# cofbuf_len=symbol_ticks*10
                 this._parent = parent;
-                this._cof = new BufferedIterator<double>(new SelfCorrcoefIterator(symbol_ticks, src, symbol_ticks), cofbuf_len, 0);
+                this._cof = new BufferedIterator<double>(ISelfCorrcoefIterator.CreateNormalized(symbol_ticks, src, symbol_ticks), cofbuf_len, 0);
                 this._avi = new AverageInterator(this._cof, symbol_ticks);
                 var sample_width = parent._cycle + 1;
                 //# rb=RingBuffer(symbol_ticks*3,0)

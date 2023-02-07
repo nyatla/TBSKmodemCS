@@ -1,7 +1,6 @@
 using jp.nyatla.kokolink.utils.math;
 using jp.nyatla.kokolink.types;
-using System.Linq;
-using System;
+
 
 namespace jp.nyatla.kokolink.protocol.tbsk.toneblock
 {
@@ -80,7 +79,7 @@ namespace jp.nyatla.kokolink.protocol.tbsk.toneblock
     public class PnTone:TraitTone{
         static private IEnumerable<double> _constructor_init(uint seed, int interval, TraitTone? base_tone)
         {
-            var tone = base_tone != null ? base_tone : new SinTone(20, 8);
+            var tone = base_tone != null ? base_tone : new SinTone(20,10);
             var pn = new XorShiftRand31(seed, skip: 29);
             var c = 0;
             int f=0;
