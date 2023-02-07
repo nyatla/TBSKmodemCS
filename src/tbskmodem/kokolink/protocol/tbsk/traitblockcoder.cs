@@ -89,7 +89,7 @@ namespace jp.nyatla.kokolink.protocol.tbsk.traitblockcoder
         private bool _is_eos;
         private Int64 _pos;
         readonly private List<double> _samples;
-        private ISelfCorrcoefIterator _cof;
+        private ISelfCorrcoefIterator? _cof;
         private double _last_data;
         private int _preload_size;
         private int _block_skip_size;

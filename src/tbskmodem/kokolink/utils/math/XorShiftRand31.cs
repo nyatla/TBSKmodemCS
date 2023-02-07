@@ -1,8 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Diagnostics;
-using jp.nyatla.kokolink.utils.wavefile.riffio;
 using jp.nyatla.kokolink.types;
 namespace jp.nyatla.kokolink.utils.math
 {

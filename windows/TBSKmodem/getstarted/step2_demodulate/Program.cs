@@ -1,9 +1,7 @@
-﻿using jp.nyatla.kokolink.protocol.tbsk.tbaskmodem;
-using jp.nyatla.kokolink.protocol.tbsk.toneblock;
+﻿using jp.nyatla.tbaskmodem;
 using jp.nyatla.kokolink.utils.wavefile;
 
-
-var tone = new XPskSinTone(10, 10);
+var tone = TbskTone.CreateXPskSin(10, 10);
 var demod = new TbskDemodulator(tone);
 
 

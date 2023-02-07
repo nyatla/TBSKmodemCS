@@ -47,9 +47,11 @@ namespace jp.nyatla.kokolink.protocol.tbsk.preamble
         readonly private TraitTone _symbol;
         private int _cycle; //#平坦部分のTick数
         private bool _asmethtod_lock;
+        public const double DEFAULT_TH = 1.0;
+        public const int DEFAULT_CYCLE = 4;
 
-
-        public CoffPreamble(TraitTone tone, double threshold =1.0,int cycle=4){
+        public CoffPreamble(TraitTone tone, double threshold = DEFAULT_TH, int cycle= DEFAULT_CYCLE)
+        {
             this._threshold=threshold;
             this._symbol=tone;
             this._cycle=cycle; //#平坦部分のTick数

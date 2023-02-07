@@ -1,10 +1,8 @@
-﻿using System.Text;
-using jp.nyatla.kokolink.protocol.tbsk.tbaskmodem;
-using jp.nyatla.kokolink.protocol.tbsk.toneblock;
+﻿using jp.nyatla.tbaskmodem;
 using jp.nyatla.kokolink.utils.wavefile;
 
 
-var tone = new XPskSinTone(10, 10).Mul(0.5);//    # SSFM DPSK
+var tone = TbskTone.CreateXPskSin(10, 10).Mul(0.5);//    # SSFM DPSK
 var payload = "アンタヤルーニャ";
 uint carrier = 8000;
 

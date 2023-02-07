@@ -1,9 +1,9 @@
 ﻿
-using jp.nyatla.kokolink.protocol.tbsk.tbaskmodem;
-using jp.nyatla.kokolink.protocol.tbsk.toneblock;
+using jp.nyatla.tbaskmodem;
 using jp.nyatla.kokolink.utils.wavefile;
 
-var tone = new XPskSinTone(10, 10).Mul(0.5);
+
+var tone = TbskTone.CreateXPskSin(10, 10).Mul(0.5);
 //var tone = new SinTone(10, 10).Mul(0.5);
 var payload = new List<int>();
 for (int i = 0; i < 16; i++)

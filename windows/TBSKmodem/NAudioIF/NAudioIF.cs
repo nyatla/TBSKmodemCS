@@ -4,6 +4,8 @@ using jp.nyatla.kokolink.types;
 using jp.nyatla.kokolink.utils.wavefile;
 using jp.nyatla.kokolink.io.audioif;
 using NAudio.Wave;
+using jp.nyatla.kokolink.utils.math;
+using System.Security.Cryptography;
 
 namespace jp.nyatla.kokolink.io.audioif
 {
@@ -123,7 +125,91 @@ namespace jp.nyatla.kokolink.io.audioif
     }
     public class NAudioInputInterator : IAudioInputInterator
     {
-        private BlockingCollection<byte> _q=new BlockingCollection<byte>();
+        private abstract class SampleQ
+        {
+            private Rms _rms;
+            public SampleQ(int sample_rate)
+            {
+                this._q = new BlockingCollection<double>(sample_rate);
+                this._rms = new Rms(Math.Max(sample_rate / 100, 10));
+            }
+            protected BlockingCollection<double> _q;
+            public double Take()
+            {
+                double ret;
+                if (!this._q.TryTake(out ret, 3000))
+                {
+                    throw new PyStopIteration();
+                }
+                return ret;
+            }
+            public abstract void Puts(byte[] s);
+            /**
+             * 継承クラスから呼び出す。
+             */
+            protected void Put(double v)
+            {
+                while(!this._q.TryAdd(v,0))
+                {
+                    double tmp;
+                    this._q.TryTake(out tmp,0);
+                }
+                lock(this._rms){
+                    this._rms.Update(v);
+                }
+            }
+            public double rms
+            {
+                get { lock (this._rms) { return this._rms.GetLastRms(); } }
+            }
+
+        }
+        private class SampleQ8 : SampleQ
+        {
+            public SampleQ8(int sample_rate) : base(sample_rate) { }
+            override public void Puts(byte[] s)
+            {
+                foreach (var i in s)
+                {
+                    var v = (double)i / 255 - 0.5;
+                    base.Put(v);
+                }
+            }
+
+        }
+        private class SampleQ16 : SampleQ
+        {
+            public SampleQ16(int sample_rate) : base(sample_rate) { }
+            override public void Puts(byte[] s)
+            {
+                Debug.Assert(s.Length % 2 == 0);
+                double r = (Math.Pow(2, 16) - 1) / 2;//(2 * *16 - 1)//2 #Daisukeパッチ
+                for (var i = 0; i < s.Length; i = i + 2)
+                {
+                    var a1 = s[i];
+                    var a2 = s[i + 1];
+                    var b = (UInt16)(a1 | ((UInt16)a2 << 8));
+                    {
+                        double ret;
+                        if ((0x8000 & b) == 0)
+                        {
+                            ret = b / r;
+                        }
+                        else
+                        {
+                            ret = (((Int32)b - 0x0000ffff) - 1) / r;
+                            ret = ret > 1 ? 1 : (ret < -1) ? -1 : 0;
+                        }
+                        base.Put(ret);
+                    }
+                }
+            }
+        }
+
+
+
+
+        private SampleQ _q;
         private WaveInEvent? _wi;
         private bool _play_now;
         //private Semaphore _se = new Semaphore(1,1);
@@ -138,17 +224,34 @@ namespace jp.nyatla.kokolink.io.audioif
             }
             return l;
         }
+
+
+
+
         public NAudioInputInterator(int framerate = 8000, int bits_par_sample = 16, int device_no = -1)
         {
             var wi = new WaveInEvent();
-            
-            Console.WriteLine(wi.DeviceNumber);
+
+
+            //Console.WriteLine(wi.DeviceNumber);
             wi.WaveFormat = new WaveFormat(framerate, bits_par_sample,1);
+            switch (bits_par_sample)
+            {
+                case 8:
+                    this._q = new SampleQ8(framerate);
+                    break;
+                case 16:
+                    this._q = new SampleQ16(framerate);
+                    break;
+                default:
+                    throw new NotImplementedException();
+            }
+            this._wi = wi;
+            this._bits_par_sample = bits_par_sample;
+
             wi.DataAvailable += (s, a) =>
             {
-                foreach(var i in a.Buffer){
-                    this._q.TryAdd(i,1000);
-                }
+                this._q.Puts(a.Buffer);
             };
             wi.RecordingStopped += (s, a) =>
             {
@@ -161,10 +264,7 @@ namespace jp.nyatla.kokolink.io.audioif
             {
                 this._play_now = false;
             }
-            this._wi = wi;
-            this._bits_par_sample = bits_par_sample;
         }
-
         public void Close()
         {
             if (this._wi != null)
@@ -195,33 +295,7 @@ namespace jp.nyatla.kokolink.io.audioif
             {
                 throw new InvalidOperationException();
             }
-            byte a1,a2;
-            switch (this._bits_par_sample)
-            {
-                case 8:
-                    if(!this._q.TryTake(out a1, 3000))
-                    {
-                        throw new PyStopIteration();
-                    }
-                    return (double)a1/255-0.5;
-                case 16:
-                    double r = (Math.Pow(2, 16) - 1) / 2;//(2 * *16 - 1)//2 #Daisukeパッチ
-                    if(!this._q.TryTake(out a1,3000) || !this._q.TryTake(out a2, 3000)){
-                        throw new PyStopIteration();
-                    }
-                    var b = (UInt16)(a1 | ((UInt16)a2 << 8));
-                    if ((0x8000 & b) == 0)
-                    {
-                        return b / r;
-                    }
-                    else
-                    {
-                        return (((Int32)b - 0x0000ffff) - 1) / r;
-                    }
-                default:
-                    break;
-            }
-            throw new NotImplementedException();
+            return this._q.Take();
         }
 
         public void Start()
@@ -252,6 +326,10 @@ namespace jp.nyatla.kokolink.io.audioif
             {
                 Thread.Sleep(100);
             }
+        }
+        public double getRms()
+        {
+            return this._q.rms;
         }
     }
 

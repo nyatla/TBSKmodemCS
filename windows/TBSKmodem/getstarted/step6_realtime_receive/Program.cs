@@ -1,16 +1,13 @@
-﻿using jp.nyatla.kokolink.protocol.tbsk.tbaskmodem;
-using jp.nyatla.kokolink.protocol.tbsk.toneblock;
+﻿using jp.nyatla.tbaskmodem;
 using jp.nyatla.kokolink.utils.wavefile;
 using jp.nyatla.kokolink.io.audioif;
-using NAudio.SoundFont;
-using System.IO;
 using jp.nyatla.kokolink.compatibility;
 
 
 
 
 //#save to sample
-var tone = new XPskSinTone(10, 10).Mul(0.5);    //# SSFM DPSK
+var tone = TbskTone.CreateXPskSin(10, 10).Mul(0.5);    //# SSFM DPSK
 var payload = "アンタヤルーニャ";// # ?byte
 int carrier = 16000;
 
