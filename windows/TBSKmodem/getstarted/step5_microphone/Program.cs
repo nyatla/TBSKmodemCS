@@ -2,12 +2,12 @@
 
 
 
-foreach(var i in NAudioInputInterator.GetDevices())
+foreach(var i in NAudioInputIterator.GetDevices())
 {
     Console.WriteLine(i);
 }
 int framerate = 8000;
-using (var na = new NAudioInputInterator(framerate: framerate, bits_par_sample:16))
+using (var na = new NAudioInputIterator(framerate: framerate, bits_par_sample:16))
 {
     na.Start();
     try

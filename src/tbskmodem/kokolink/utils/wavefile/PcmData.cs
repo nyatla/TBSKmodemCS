@@ -3,7 +3,7 @@ using jp.nyatla.kokolink.types;
 using jp.nyatla.kokolink.utils.wavefile.riffio;
 using jp.nyatla.kokolink.utils.recoverable;
 using System.Diagnostics;
-using static jp.nyatla.kokolink.utils.wavefile.PcmData;
+using System.Data.Common;
 
 namespace jp.nyatla.kokolink.utils.wavefile
 {
@@ -151,166 +151,78 @@ namespace jp.nyatla.kokolink.utils.wavefile
         }
 
 
-        public class DoubleBytesCovertor
-        {
-            /**
-             * [RecovableStopIteratonSAFE]
-             */
-            public class Byte16ToDouble : IPyIterator<double>
-            {
-                private IPyIterator<byte> _src;
-                private int _nod;
-                private byte[] _buf;
-                readonly static int R = (int)(Math.Pow(2, 16) - 1) / 2;//(2 * *16 - 1)//2 #Daisukeパッチ
-                public Byte16ToDouble(IPyIterator<byte> src)
-                {
-                    this._src = src;
-                    this._nod = 0;
-                    this._buf = new byte[2];
-                }
-                public double Next()
-                {
-                    //2個ためる。
-                    try
-                    {
-                        while (this._nod < 2)
-                        {
-                            this._buf[this._nod] = this._src.Next();
-                            this._nod++;
-                        }
-                    }
-                    catch (RecoverableStopIteration)
-                    {
-                        throw;
-                    }
-                    catch (PyStopIteration)
-                    {
-                        //端数ビットのトラップ
-                        if (this._nod != 0)
-                        {
-                            throw new InvalidDataException("Fractional bytes detected.");
-                        }
-                        throw;
-                    }
-                    this._nod = 0;
-                    //変換
-                    byte[] buf = this._buf;
-                    var b = (UInt16)(buf[0] | ((UInt16)buf[1] << 8));
-                    double ret;
-                    if ((0x8000 & b) == 0)
-                    {
-                        ret = b / R;
-                    }
-                    else
-                    {
-                        ret = (((Int32)b - 0x0000ffff) - 1) / R;
-                        ret = ret > 1 ? 1 : (ret < -1) ? -1 : 0;
-                    }
-                    return ret;
-                }
 
-            }
-            /**
-             * [RecovableStopIteratonSAFE]
-             */
-            public class Byte8ToDouble : IPyIterator<double>
-            {
-                private IPyIterator<byte> _src;
-                public Byte8ToDouble(IPyIterator<byte> src)
-                {
-                    this._src = src;
-                }
-                public double Next()
-                {
-                    return (double)this._src.Next() / 255 - 0.5;
-                }
-            }
-            public class DoubleToByte8 : IPyIterator<byte>
-            {
-                private IPyIterator<double> _src;
-                public DoubleToByte8(IPyIterator<double> src)
-                {
-                    this._src = src;
-                }
-                public byte Next()
-                {
-                    return (byte)(this._src.Next() * 127 + 128);
-                }
-            }
 
-            public class DoubleToByte16 : IPyIterator<byte>
-            {
-                readonly static int R = (int)(Math.Pow(2, 16) - 1) / 2;//(2 * *16 - 1)//2 #Daisukeパッチ
 
-                private IPyIterator<double> _src;
-                private int _c;
-                private byte _ret2;
-                public DoubleToByte16(IPyIterator<double> src)
-                {
-                    this._src = src;
-                    this._c = 0;
-                    this._ret2 = 0;
-                }
-                public byte Next()
-                {
-                    if (this._c > 0)
-                    {
-                        this._c = 0;
-                        return this._ret2;
-                    }
-                    var d = this._src.Next();
-                    var f = d * R;
-                    if (f >= 0)
-                    {
-                        UInt16 v = (UInt16)(Math.Min((double)Int16.MaxValue, f));
-                        this._ret2 = (byte)((v >> 8) & 0xff);
-                        this._c = 1;
-                        return (byte)(v & 0xff);
-                    }
-                    else
-                    {
-                        UInt16 v = (UInt16)(0xffff + (UInt16)(Math.Max(f, (double)Int16.MinValue)) + 1);
-                        this._ret2 = ((byte)((v >> 8) & 0xff));
-                        this._c = 1;
-                        return (byte)(v & 0xff);
-                    }
-                }
 
-            }
 
-            static public IPyIterator<double> ToDouble(IPyIterator<byte> src, int sample_rate)
-            {
-                switch (sample_rate)
-                {
-                    case 8: return new Byte8ToDouble(src);
-                    case 16: return new Byte16ToDouble(src);
-                    default: throw new NotImplementedException("Invalid bits");
-                }
-            }
-            static public IPyIterator<byte> ToBytes(IPyIterator<double> src, int sample_rate)
-            {
-                switch (sample_rate)
-                {
-                    case 8: return new DoubleToByte8(src);
-                    case 16: return new DoubleToByte16(src);
-                    default: throw new NotImplementedException("Invalid bits");
-                }
-            }
-        }
 
 
         public List<double> DataAsFloat()
         {
             Debug.Assert(this._wavfile.Data!= null);
-            var s = new PyIterator<byte>(this._wavfile.Data.Data);
-            return Functions.ToList<double>(DoubleBytesCovertor.ToDouble(s,this.Framerate));
+            var src = this._wavfile.Data.Data;
+            var num_of_sample = src.Count;
+            Debug.Assert(num_of_sample % (this.SampleBits / 8) == 0);
+
+            var ret=new List<double>();
+            if (this.SampleBits == 8)
+            {
+                foreach(var i in src)
+                {
+                    ret.Add(FloatConverter.ByteToDouble(i));
+                }
+
+            }else if (this.SampleBits == 16)
+            {
+                for (var i=0;i<num_of_sample;i+=2)
+                {
+                    Int16 v = (Int16)((UInt16)src[i] | ((UInt16)src[i+1] << 8));
+                    ret.Add(FloatConverter.Int16ToDouble(v));
+                }
+            }
+            else
+            {
+                throw new ArgumentException();
+            }
+            return ret;
         }
 
 
 
         static private byte[] Float2bytes(IPyIterator<Double> fdata, int bits)
         {
-            return Functions.ToArray<byte>(DoubleBytesCovertor.ToBytes(fdata, bits));
+            List<byte> ret = new List<byte>();
+
+            try
+            {
+                if (bits == 8)
+                {
+                    while (true)
+                    {
+                        ret.Add(FloatConverter.DoubleToByte(fdata.Next()));
+                    }
+
+                }
+                else if (bits == 16)
+                {
+                    while (true)
+                    {
+                        var v = FloatConverter.DoubleToInt16(fdata.Next());
+                        ret.Add((byte)(((UInt16)v) & 0xff));
+                        ret.Add((byte)((v >> 8) & 0xff));
+                    }
+                }
+                else
+                {
+                    throw new ArgumentException();
+                }
+
+            }
+            catch (PyStopIteration)
+            {
+                return ret.ToArray();
+            }
         }
 
 

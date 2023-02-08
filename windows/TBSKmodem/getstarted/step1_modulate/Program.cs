@@ -4,7 +4,7 @@ using jp.nyatla.kokolink.utils.wavefile;
 
 
 var tone = TbskTone.CreateXPskSin(10, 10).Mul(0.5);
-//var tone = new SinTone(10, 10).Mul(0.5);
+//var tone = TbskTone.CreateSin(100,1);
 var payload = new List<int>();
 for (int i = 0; i < 16; i++)
 {

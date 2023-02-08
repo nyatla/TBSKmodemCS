@@ -33,7 +33,7 @@ Console.WriteLine("Start capturing");
 
 
 var demod = new TbskDemodulator(tone);
-using (var stream=new NAudioInputInterator(carrier, bits_par_sample: 16,device_no: -1)) {
+using (var stream=new NAudioInputIterator(carrier, bits_par_sample: 16,device_no: -1)) {
     Console.WriteLine("Ctrl^C to stop.");
     stream.Start();
     while (true)

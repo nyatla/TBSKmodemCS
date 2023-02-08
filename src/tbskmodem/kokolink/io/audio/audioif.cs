@@ -27,7 +27,7 @@ namespace jp.nyatla.kokolink.io.audioif
     //"""Audioデバイスからサンプリング値を取り込むイテレータです。
     //サンプリング値は[-1, 1] 範囲のfloatです。
     //"""
-    public interface IAudioInputInterator : IDisposable, IPyIterator<double>
+    public interface IAudioInputIterator : IDisposable, IPyIterator<double>
     {
         //"""データの取り込みを開始します。
         //取り込みキューは初期化されます。

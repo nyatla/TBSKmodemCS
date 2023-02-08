@@ -6,6 +6,7 @@ using jp.nyatla.kokolink.io.audioif;
 using NAudio.Wave;
 using jp.nyatla.kokolink.utils.math;
 using System.Security.Cryptography;
+using jp.nyatla.kokolink.utils;
 
 namespace jp.nyatla.kokolink.io.audioif
 {
@@ -123,7 +124,7 @@ namespace jp.nyatla.kokolink.io.audioif
             }
         }
     }
-    public class NAudioInputInterator : IAudioInputInterator
+    public class NAudioInputIterator : IAudioInputIterator
     {
         private abstract class SampleQ
         {
@@ -170,7 +171,7 @@ namespace jp.nyatla.kokolink.io.audioif
             {
                 foreach (var i in s)
                 {
-                    var v = (double)i / 255 - 0.5;
+                    var v = FloatConverter.ByteToDouble(i);
                     base.Put(v);
                 }
             }
@@ -181,29 +182,13 @@ namespace jp.nyatla.kokolink.io.audioif
             public SampleQ16(int sample_rate) : base(sample_rate) { }
             override public void Puts(byte[] s)
             {
-                Debug.Assert(s.Length % 2 == 0);
-                double r = (Math.Pow(2, 16) - 1) / 2;//(2 * *16 - 1)//2 #Daisukeパッチ
                 for (var i = 0; i < s.Length; i += 2)
                 {
-                    var a1 = s[i];
-                    var a2 = s[i + 1];
-                    var b = (UInt16)(a1 | ((UInt16)a2 << 8));
-                    {
-                        double ret;
-                        if ((0x8000 & b) == 0)
-                        {
-                            ret = b / r;
-                        }
-                        else
-                        {
-                            ret = (((Int32)b - 0x0000ffff) - 1) / r;
-                            ret = ret > 1 ? 1 : (ret < -1) ? -1 : 0;
-                        }
-                        base.Put(ret);
-                    }
+                    base.Put(FloatConverter.Int16ToDouble((Int16)((UInt16)s[i] | ((UInt16)s[i + 1] << 8))));
                 }
             }
         }
+
 
 
 
@@ -227,7 +212,7 @@ namespace jp.nyatla.kokolink.io.audioif
 
 
 
-        public NAudioInputInterator(int framerate = 8000, int bits_par_sample = 16, int device_no = -1)
+        public NAudioInputIterator(int framerate = 8000, int bits_par_sample = 16, int device_no = -1)
         {
             var wi = new WaveInEvent();
 

@@ -4,7 +4,7 @@ using jp.nyatla.kokolink.utils.wavefile;
 
 var tone = TbskTone.CreateXPskSin(10, 10).Mul(0.5);//    # SSFM DPSK
 var payload = "アンタヤルーニャ";
-uint carrier = 8000;
+int carrier = 8000;
 
 //# modulation
 var mod = new TbskModulator(tone);
@@ -14,7 +14,7 @@ IList<double> src_pcm = mod.Modulate(payload).ToList();
 var wav = new PcmData(src_pcm, 16, carrier);
 using (var stream = File.Open("./step4.cs.wav", FileMode.Create, FileAccess.Write))
 {
-    var pcm = new PcmData(src_pcm, 16, (uint)carrier);
+    var pcm = new PcmData(src_pcm, 16, carrier);
     PcmData.Dump(pcm, stream);
 }
 

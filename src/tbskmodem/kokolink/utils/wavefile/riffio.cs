@@ -1,8 +1,5 @@
 using System.Diagnostics;
-using System.Drawing;
-using System.Xml.Linq;
 using jp.nyatla.kokolink.compatibility;
-using jp.nyatla.kokolink.types;
 
 
 namespace jp.nyatla.kokolink.utils.wavefile.riffio
