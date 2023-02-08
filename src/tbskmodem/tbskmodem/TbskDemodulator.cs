@@ -77,7 +77,7 @@ namespace jp.nyatla.tbaskmodem
         public class DemodulateAsIntAS : AsyncDemodulateX<int>
         {
             public DemodulateAsIntAS(TbskDemodulator parent, IPyIterator<double> src, int bitwidth) :
-                base(parent, src, (TraitBlockDecoder src) => SequentialEnumerable<int>.CreateInstance(new BitsWidthFilter(1, bitwidth).SetInput(src)))
+                base(parent, src, (TraitBlockDecoder src) => new BitsWidthFilter(1, bitwidth).SetInput(src))
             { }
         }
 
@@ -86,7 +86,11 @@ namespace jp.nyatla.tbaskmodem
 
         public ISequentialEnumerable<int>? DemodulateAsBit(IEnumerable<double> src)
         {
-            return this.DemodulateAsBit(Functions.ToPyIter(src));
+            var w = this.DemodulateAsBit(Functions.ToPyIter(src));
+            if (w == null) { return null; 
+            } else{
+                return SequentialEnumerable<int>.CreateInstance(w);
+            }
         }
 
         //    """ TBSK信号からnビットのint値配列を復元します。
@@ -98,12 +102,13 @@ namespace jp.nyatla.tbaskmodem
             DemodulateAsIntAS asmethod = new DemodulateAsIntAS(this, src, bitwidth);
             if (asmethod.Run())
             {
-                return asmethod.Result;
+                Debug.Assert(asmethod.Result != null);
+                return SequentialEnumerable<int>.CreateInstance(asmethod.Result);
             }
             else
             {
                 this._asmethod_lock = true;// #解放はAsyncDemodulateXのcloseで
-                throw new RecoverableException<DemodulateAsIntAS, ISequentialEnumerable<int>?>(asmethod);
+                throw new RecoverableException<DemodulateAsIntAS, IPyIterator<int>?>(asmethod);
             }
         }
         public ISequentialEnumerable<int>? DemodulateAsInt(IEnumerable<double> src, int bitwidth = 8)
@@ -113,19 +118,19 @@ namespace jp.nyatla.tbaskmodem
         public class DemodulateAsByteAS : AsyncDemodulateX<byte>
         {
             public DemodulateAsByteAS(TbskDemodulator parent, IPyIterator<double> src) :
-                base(parent, src, (TraitBlockDecoder src) => SequentialEnumerable<byte>.CreateInstance(new Bits2BytesFilter(input_bits: 1).SetInput(src)))
+                base(parent, src, (TraitBlockDecoder src) => new Bits2BytesFilter(input_bits: 1).SetInput(src))
             { }
         }
         public class DemodulateAsStrAS : AsyncDemodulateX<char>
         {
             public DemodulateAsStrAS(TbskDemodulator parent, IPyIterator<double> src, string encoding = "utf-8") :
-                base(parent, src, (TraitBlockDecoder src) => SequentialEnumerable<char>.CreateInstance(new Bits2StrFilter(input_bits: 1, encoding: encoding).SetInput(src)))
+                base(parent, src, (TraitBlockDecoder src) => new Bits2StrFilter(input_bits: 1, encoding: encoding).SetInput(src))
             { }
         }
         public class DemodulateAsHexStrAS : AsyncDemodulateX<string>
         {
             public DemodulateAsHexStrAS(TbskDemodulator parent, IPyIterator<double> src) :
-                base(parent, src, (TraitBlockDecoder src) => SequentialEnumerable<string>.CreateInstance(new Bits2HexStrFilter(input_bits: 1).SetInput(src)))
+                base(parent, src, (TraitBlockDecoder src) => new Bits2HexStrFilter(input_bits: 1).SetInput(src))
             { }
         }
 
@@ -139,12 +144,13 @@ namespace jp.nyatla.tbaskmodem
             DemodulateAsByteAS asmethod = new DemodulateAsByteAS(this, src);
             if (asmethod.Run())
             {
-                return asmethod.Result;
+                Debug.Assert(asmethod.Result != null);
+                return SequentialEnumerable<byte>.CreateInstance(asmethod.Result);
             }
             else
             {
                 this._asmethod_lock = true;// #解放はAsyncDemodulateXのcloseで
-                throw new RecoverableException<DemodulateAsByteAS, ISequentialEnumerable<byte>?>(asmethod);
+                throw new RecoverableException<DemodulateAsByteAS, IPyIterator<byte>?>(asmethod);
             }
         }
         public ISequentialEnumerable<byte>? DemodulateAsBytes(IEnumerable<double> src)
@@ -167,12 +173,13 @@ namespace jp.nyatla.tbaskmodem
             DemodulateAsStrAS asmethod = new DemodulateAsStrAS(this, src, encoding);
             if (asmethod.Run())
             {
-                return asmethod.Result;
+                Debug.Assert(asmethod.Result != null);
+                return SequentialEnumerable<char>.CreateInstance(asmethod.Result);
             }
             else
             {
                 this._asmethod_lock = true;// #解放はAsyncDemodulateXのcloseで
-                throw new RecoverableException<DemodulateAsStrAS, ISequentialEnumerable<char>?>(asmethod);
+                throw new RecoverableException<DemodulateAsStrAS, IPyIterator<char>?>(asmethod);
             }
         }
 
@@ -183,12 +190,13 @@ namespace jp.nyatla.tbaskmodem
             DemodulateAsHexStrAS asmethod = new DemodulateAsHexStrAS(this, src);
             if (asmethod.Run())
             {
-                return asmethod.Result;
+                Debug.Assert(asmethod.Result != null);
+                return SequentialEnumerable<string>.CreateInstance(asmethod.Result);
             }
             else
             {
                 this._asmethod_lock = true;// #解放はAsyncDemodulateXのcloseで
-                throw new RecoverableException<DemodulateAsHexStrAS, ISequentialEnumerable<string>?>(asmethod);
+                throw new RecoverableException<DemodulateAsHexStrAS, IPyIterator<string>?>(asmethod);
             }
         }
         public ISequentialEnumerable<string>? DemodulateAsHexStr(IEnumerable<double> src)

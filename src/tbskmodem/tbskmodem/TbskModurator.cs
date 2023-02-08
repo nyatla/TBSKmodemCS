@@ -18,109 +18,6 @@ namespace jp.nyatla.tbaskmodem
     // """
     public class TbskModulator : TbskModulator_impl
     {
-        // """ ビット配列を差動ビットに変換します。
-        // """
-        private class DiffBitEncoder : BasicRoStream<int>, IBitStream
-        {
-            private int _last_bit;
-            readonly private IRoStream<int> _src;
-            private bool _is_eos;
-            private Int64 _pos;
-            public DiffBitEncoder(int firstbit, IRoStream<int> src)
-            {
-
-                this._last_bit = firstbit;
-                this._src = src;
-                this._is_eos = false;
-                this._pos = 0;
-            }
-            override public int Next()
-            {
-                if (this._is_eos)
-                {
-                    throw new PyStopIteration();
-                }
-                if (this._pos == 0)
-                {
-                    this._pos = this._pos + 1;
-                    return this._last_bit; //#1st基準シンボル
-                }
-                int n;
-                try
-                {
-                    n = this._src.Next();
-                }
-                catch (PyStopIteration e)
-                {
-                    this._is_eos = true;
-                    throw new PyStopIteration(e);
-                }
-                if (n == 1)
-                {
-                    //pass
-                }
-                else
-                {
-                    this._last_bit = (this._last_bit + 1) % 2;
-                }
-                return this._last_bit;
-            }
-            // @property
-            override public Int64 Pos
-            {
-                get => this._pos;
-            }
-        }
-        private class EnumerableWrapper<T> : IEnumerable<T>
-        {
-            class EnumeratorWrapper : IEnumerator<T>
-            {
-                private T? _current;
-                readonly private IPyIterator<T> _src;
-                public EnumeratorWrapper(IPyIterator<T> src)
-                {
-                    this._src = src;
-                }
-                T IEnumerator<T>.Current => this._current!;
-
-                object IEnumerator.Current => this._current!;
-
-                void IDisposable.Dispose()
-                {
-                    //throw new NotImplementedException();
-                }
-
-                bool IEnumerator.MoveNext()
-                {
-                    try
-                    {
-                        this._current = this._src.Next();
-                        return true;
-                    }
-                    catch (PyStopIteration)
-                    {
-                        return false;
-                    }
-                }
-
-                void IEnumerator.Reset()
-                {
-                    throw new NotImplementedException();
-                }
-            }
-            readonly private IEnumerator<T> _enumerator;
-
-            public EnumerableWrapper(IPyIterator<T> src)
-            {
-                this._enumerator = new EnumeratorWrapper(src);
-            }
-
-            IEnumerator<T> IEnumerable<T>.GetEnumerator() => this._enumerator;
-
-            IEnumerator IEnumerable.GetEnumerator() => this._enumerator;
-        }
-
-
         public TbskModulator(TraitTone tone, Preamble? preamble = null):base(tone,preamble)
         {
         }
@@ -128,7 +25,9 @@ namespace jp.nyatla.tbaskmodem
         public IEnumerable<double> ModulateAsBit(IEnumerable<int> src)
         {
             //既にIPyIteratorを持っていたらそのまま使う。
-            return base.ModulateAsBit(Functions.ToPyIter<int>(src));
+            return SequentialEnumerable<double>.CreateInstance(
+                base.ModulateAsBit(Functions.ToPyIter<int>(src))
+                );
         }
 
 
@@ -157,22 +56,23 @@ namespace jp.nyatla.tbaskmodem
         public ISequentialEnumerable<double> Modulate(IEnumerable<int> src, int bitwidth = 8)
         {
             //既にIPyIteratorを持っていたらそのまま使う。
-            return this.ModulateAsBit(
+            return SequentialEnumerable<double>.CreateInstance(
+                this.ModulateAsBit(
                 new BitsWidthFilter(bitwidth).SetInput(new RoStream<int>(Functions.ToPyIter<int>(src)))
-                );
+                ));
         }
         public ISequentialEnumerable<double> Modulate(IEnumerable<byte> src)
         {
             //既にIPyIteratorを持っていたらそのまま使う。
-            return this.ModulateAsBit(
+            return SequentialEnumerable<double>.CreateInstance(this.ModulateAsBit(
                 new BitsWidthFilter(8).SetInput(new ByteStream(Functions.ToPyIter<byte>(src)))
-                );
+                ));
         }
         public ISequentialEnumerable<double> Modulate(string src, string encoding = "utf-8")
         {
-            return this.ModulateAsBit(
+            return SequentialEnumerable<double>.CreateInstance(this.ModulateAsBit(
                 new BitsWidthFilter(8).SetInput(new ByteStream(src, encoding: encoding))
-                );
+                ));
         }
     }
 }

@@ -1,16 +1,12 @@
-using System.Globalization;
-using System.Collections;
 using System.Diagnostics;
 using jp.nyatla.kokolink.interfaces;
 using jp.nyatla.kokolink.utils;
 using jp.nyatla.kokolink.utils.recoverable;
 using jp.nyatla.kokolink.streams;
-using jp.nyatla.kokolink.filter;
 using jp.nyatla.kokolink.types;
 using jp.nyatla.kokolink.protocol.tbsk.preamble;
 using jp.nyatla.kokolink.streams.rostreams;
 using jp.nyatla.kokolink.protocol.tbsk.toneblock;
-using jp.nyatla.kokolink.compatibility;
 using jp.nyatla.kokolink.protocol.tbsk.traitblockcoder;
 
 
@@ -84,54 +80,7 @@ namespace jp.nyatla.kokolink.protocol.tbsk.tbaskmodem
                 get => this._pos;
             }
         }
-        private class EnumerableWrapper<T> : IEnumerable<T>
-        {
-            class EnumeratorWrapper : IEnumerator<T>
-            {
-                private T? _current;
-                readonly private IPyIterator<T> _src;
-                public EnumeratorWrapper(IPyIterator<T> src)
-                {
-                    this._src = src;
-                }
-                T IEnumerator<T>.Current => this._current!;
 
-                object IEnumerator.Current => this._current!;
-
-                void IDisposable.Dispose()
-                {
-                    //throw new NotImplementedException();
-                }
-
-                bool IEnumerator.MoveNext()
-                {
-                    try
-                    {
-                        this._current = this._src.Next();
-                        return true;
-                    }
-                    catch (PyStopIteration)
-                    {
-                        return false;
-                    }
-                }
-
-                void IEnumerator.Reset()
-                {
-                    throw new NotImplementedException();
-                }
-            }
-            readonly private IEnumerator<T> _enumerator;
-
-            public EnumerableWrapper(IPyIterator<T> src)
-            {
-                this._enumerator = new EnumeratorWrapper(src);
-            }
-
-            IEnumerator<T> IEnumerable<T>.GetEnumerator() => this._enumerator;
-
-            IEnumerator IEnumerable.GetEnumerator() => this._enumerator;
-        }
 
 
         readonly private TraitTone _tone;
@@ -148,14 +97,14 @@ namespace jp.nyatla.kokolink.protocol.tbsk.tbaskmodem
             this._enc = new TraitBlockEncoder(tone);
             this._tone = tone;
         }
-        public ISequentialEnumerable<double> ModulateAsBit(IPyIterator<int> src)
+        public IPyIterator<double> ModulateAsBit(IPyIterator<int> src)
         {
             var ave_window_shift = Math.Max((int)(this._tone.Count * 0.1), 2) / 2; //#検出用の平均フィルタは0.1*len(tone)//2だけずれてる。ここを直したらTraitBlockDecoderも直せ
-            return SequentialEnumerable<double>.CreateInstance(new IterChain<double>(
+            return new IterChain<double>(
                 this._preamble.GetPreamble(),
                 this._enc.SetInput(new DiffBitEncoder(0, new BitStream(src, 1))),
                 new Repeater<double>(0, ave_window_shift)    //#demodulatorが平均値で補正してる関係で遅延分を足してる。
-            ));
+            );
         }
     }
 
@@ -167,11 +116,11 @@ namespace jp.nyatla.kokolink.protocol.tbsk.tbaskmodem
     public class TbskDemodulator_impl
     {
 
-        public class AsyncDemodulateX<T> : AsyncMethod<ISequentialEnumerable<T>?>
+        public class AsyncDemodulateX<T> : AsyncMethod<IPyIterator<T>?>
         {
 
 
-            public AsyncDemodulateX(TbskDemodulator_impl parent, IPyIterator<double> src, Func<TraitBlockDecoder,ISequentialEnumerable<T>> resultbuilder) : base()
+            public AsyncDemodulateX(TbskDemodulator_impl parent, IPyIterator<double> src, Func<TraitBlockDecoder, IPyIterator<T>> resultbuilder) : base()
             {
                 this._tone_ticks = parent._tone.Count;
                 this._result = null;
@@ -184,7 +133,7 @@ namespace jp.nyatla.kokolink.protocol.tbsk.tbaskmodem
                 this._resultbuilder = resultbuilder;
 
             }
-            override public ISequentialEnumerable<T>? Result
+            override public IPyIterator<T>? Result
             {
                 get
                 {
@@ -216,7 +165,7 @@ namespace jp.nyatla.kokolink.protocol.tbsk.tbaskmodem
                 }
 
             }
-            readonly private Func<TraitBlockDecoder, ISequentialEnumerable<T>> _resultbuilder;
+            readonly private Func<TraitBlockDecoder, IPyIterator<T>> _resultbuilder;
             private bool _closed;
             readonly private int _tone_ticks;
             private CoffPreamble.WaitForSymbolAS? _wsrex;
@@ -224,7 +173,7 @@ namespace jp.nyatla.kokolink.protocol.tbsk.tbaskmodem
             readonly private IRoStream<double> _stream;
             readonly private TbskDemodulator_impl _parent;
             private int _co_step;
-            private ISequentialEnumerable<T>? _result;
+            private IPyIterator<T>? _result;
             override public bool Run()
             {
                 //# print("run",self._co_step)
@@ -317,14 +266,14 @@ namespace jp.nyatla.kokolink.protocol.tbsk.tbaskmodem
         public class DemodulateAsBitAS : AsyncDemodulateX<int>
         {
             public DemodulateAsBitAS(TbskDemodulator_impl parent, IPyIterator<double> src) :
-                base(parent, src, (TraitBlockDecoder src) => SequentialEnumerable<int>.CreateInstance(src))
+                base(parent, src, (TraitBlockDecoder src) => src)
             { }
         }
 
         //""" TBSK信号からビットを復元します。
         //    関数は信号を検知する迄制御を返しません。信号を検知せずにストリームが終了した場合はNoneを返します。
         //"""
-        public ISequentialEnumerable<int>? DemodulateAsBit(IPyIterator<double> src)
+        public IPyIterator<int>? DemodulateAsBit(IPyIterator<double> src)
         {
             Debug.Assert(!this._asmethod_lock);
             DemodulateAsBitAS asmethod = new DemodulateAsBitAS(this, src);
@@ -335,7 +284,7 @@ namespace jp.nyatla.kokolink.protocol.tbsk.tbaskmodem
             else
             {
                 this._asmethod_lock = true;// #解放はAsyncDemodulateXのcloseで
-                throw new RecoverableException<DemodulateAsBitAS, ISequentialEnumerable<int>?>(asmethod);
+                throw new RecoverableException<DemodulateAsBitAS, IPyIterator<int>?>(asmethod);
             }
         }
 
