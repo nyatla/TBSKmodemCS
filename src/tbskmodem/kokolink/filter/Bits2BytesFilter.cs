@@ -1,14 +1,7 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
 using System.Diagnostics;
 using jp.nyatla.kokolink.interfaces;
 using jp.nyatla.kokolink.utils;
-using jp.nyatla.kokolink.utils.wavefile.riffio;
 using jp.nyatla.kokolink.streams.rostreams;
-using jp.nyatla.kokolink.utils.recoverable;
-using jp.nyatla.kokolink.streams;
 using jp.nyatla.kokolink.types;
 
 namespace jp.nyatla.kokolink.filter

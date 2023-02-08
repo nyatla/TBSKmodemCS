@@ -18,15 +18,13 @@ namespace jp.nyatla.kokolink.filter
     {
         private Int64 _pos;
         private int _input_bits;
-        readonly private string _encoding;
-        private IList<byte> _savedata;
         private IPyIterator<int>? _iter;
+        private BrokenTextStreamDecoder _decoder;
 
         public Bits2StrFilter(int input_bits = 1, string encoding = "utf-8"):base()
         {
             this._input_bits = input_bits;
-            this._encoding = encoding;
-            this._savedata = new List<byte>();
+            this._decoder = new BrokenTextStreamDecoder(encoding);
         }
         public Bits2StrFilter SetInput(IRoStream<int> src)
         {
@@ -42,26 +40,30 @@ namespace jp.nyatla.kokolink.filter
             }
             while (true)
             {
-                int d;
                 try
                 {
-                    d = this._iter.Next();
+                    while (true)
+                    {
+                        var r = this._decoder.Update((byte)this._iter.Next());
+                        if (r != null)
+                        {
+                            return (char)r;
+                        }
+                    }
                 }
                 catch (RecoverableStopIteration e)
                 {
                     throw e;
-                }
-                this._savedata.Add((byte)d);
-                try
+                }catch(PyStopIteration e)
                 {
-                    var r = System.Text.Encoding.GetEncoding(this._encoding,new EncoderExceptionFallback(),new DecoderExceptionFallback()).GetChars(this._savedata.ToArray());
-                    this._savedata.Clear();
-                    return r[0];
+                    var r = this._decoder.Update();
+                    if (r == null)
+                    {
+                        throw e;
+                    }
+                    return (char)r;
                 }
-                catch (DecoderFallbackException)
-                {
-                    continue;
-                }
+
             }
         }
         override public Int64 Pos
