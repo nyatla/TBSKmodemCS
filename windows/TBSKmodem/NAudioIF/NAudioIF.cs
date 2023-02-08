@@ -41,7 +41,7 @@ namespace jp.nyatla.kokolink.io.audioif
         //    }
         //    return l;
         //}
-        public NAudioPlayer(PcmData src, int device_no = -1) : this(src.WavData, src.SampleBits, (int)src.Framerate, 1,device_no:device_no)
+        public NAudioPlayer(PcmData src, int device_no = -1) : this(src.Data, src.SampleBits, (int)src.Framerate, 1,device_no:device_no)
         {
         }
 

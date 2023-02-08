@@ -128,7 +128,7 @@ namespace jp.nyatla.kokolink.utils.wavefile
 
             }
         }
-        public List<byte> WavData
+        public List<byte> Data
         {
             get
             {
