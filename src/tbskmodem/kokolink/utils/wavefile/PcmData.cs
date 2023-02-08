@@ -161,7 +161,7 @@ namespace jp.nyatla.kokolink.utils.wavefile
                 private IPyIterator<byte> _src;
                 private int _nod;
                 private byte[] _buf;
-                readonly static double R = (Math.Pow(2, 16) - 1) / 2;//(2 * *16 - 1)//2 #Daisukeパッチ
+                readonly static int R = (int)(Math.Pow(2, 16) - 1) / 2;//(2 * *16 - 1)//2 #Daisukeパッチ
                 public Byte16ToDouble(IPyIterator<byte> src)
                 {
                     this._src = src;
@@ -240,7 +240,7 @@ namespace jp.nyatla.kokolink.utils.wavefile
 
             public class DoubleToByte16 : IPyIterator<byte>
             {
-                readonly static double R = (Math.Pow(2, 16) - 1) / 2;//(2 * *16 - 1)//2 #Daisukeパッチ
+                readonly static int R = (int)(Math.Pow(2, 16) - 1) / 2;//(2 * *16 - 1)//2 #Daisukeパッチ
 
                 private IPyIterator<double> _src;
                 private int _c;
