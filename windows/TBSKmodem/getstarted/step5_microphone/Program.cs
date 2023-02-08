@@ -15,7 +15,7 @@ using (var na = new NAudioInputInterator(framerate: framerate, bits_par_sample:1
         for (; ; )
         {
             Thread.Sleep(30);
-            var v = (int)Math.Max(0, (Math.Log(na.getRms()) + 5) * 5);
+            var v = (int)Math.Max(0, (Math.Log(na.GetRms()) + 5) * 5);
             Console.Write("\r" + new String('#', v) + new string(' ', (50 - v)));
         }
 

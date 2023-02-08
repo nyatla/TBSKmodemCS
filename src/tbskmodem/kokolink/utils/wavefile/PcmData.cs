@@ -1,219 +1,318 @@
-using System.Diagnostics;
+using jp.nyatla.kokolink.compatibility;
+using jp.nyatla.kokolink.types;
 using jp.nyatla.kokolink.utils.wavefile.riffio;
+using jp.nyatla.kokolink.utils.recoverable;
+using System.Diagnostics;
+using static jp.nyatla.kokolink.utils.wavefile.PcmData;
 
-namespace jp.nyatla.kokolink.utils.wavefile{
+namespace jp.nyatla.kokolink.utils.wavefile
+{
 
-
-
-    // """ wavファイルのラッパーです。1chモノラルpcmのみ対応します。
-    // """
-    public class PcmData{
-        // """-1<n<1をWaveファイルペイロードへ変換
-        // """
-        // if bits==8:
-        //     # a=np.array([i*127+128 for i in fdata]).astype("uint8").tobytes()
-        //     # b=b"".join([struct.pack("B",int(i*127+128)) for i in fdata])
-        //     # print(a==b)
-        //     # assert(a==b)
-        //     # return np.array([i*127+128 for i in fdata]).astype("uint8").tobytes()
-        //     return b"".join([struct.pack("B",int(i*127+128)) for i in fdata])
-        // elif bits==16:
-        //     r=(2**16-1)//2 #Daisukeパッチ
-        //     # a=b"".join([struct.pack("<h",int(i*r)) for i in fdata])
-        //     # b=np.array([i*r for i in fdata]).astype("int16").tobytes()
-        //     # print(a==b)
-        //     # assert(a==b)
-        //     # return np.array([i*r for i in fdata]).astype("int16").tobytes()
-        //     return b"".join([struct.pack("<h",int(i*r)) for i in fdata])
-        // raise ValueError()
-        // """-1<n<1をWaveファイルペイロードへ変換
-        // """
-        static private byte[] Float2bytes(IEnumerable<double> fdata, int bits)
+    class SReader : IBinaryReader
+    {
+        Stream _src;
+        public SReader(Stream src)
         {
-            if (bits == 8)
+            this._src = src;
+        }
+        public byte[] ReadBytes(int size)
+        {
+            var ret = new byte[size];
+            for (var i = 0; i < size; i++)
             {
-                var ret = new List<byte>();
-                foreach (var i in fdata)
+                var w = this._src.ReadByte();
+                if (w < 0)
                 {
-                    ret.Add((byte)(i * 127 + 128)); //uint8
+                    throw new EndOfStreamException();
                 }
-                return ret.ToArray();
+                ret[i] = (byte)w;
             }
-            else if (bits == 16)
+            return ret;
+        }
+    }
+    class SWriter : IBinaryWriter
+    {
+        Stream _src;
+        public SWriter(Stream src)
+        {
+            this._src = src;
+        }
+        public int WriteBytes(List<byte> buf)
+        {
+            return this.WriteBytes(buf.ToArray());
+        }
+        public int WriteBytes(byte[] buf)
+        {
+            this._src.Write(buf);
+            return buf.Length;
+        }
+    }
+
+
+
+    public class PcmData
+    {
+        private readonly WaveFile _wavfile;
+        public static PcmData Load(IBinaryReader fp)
+        {
+            return new PcmData(fp);
+        }
+        public static PcmData Load(Stream src)
+        {
+
+
+            var io = new SReader(src);
+            return new PcmData(io);
+        }
+
+
+        public static void Dump(PcmData src, IBinaryWriter dest)
+        {
+            src._wavfile.Dump(dest);
+        }
+        public static void Dump(PcmData src, Stream dest)
+        {
+            var io = new SWriter(dest);
+            PcmData.Dump(src, io);
+        }
+
+
+        public PcmData(IBinaryReader fp)
+        {
+            this._wavfile = new WaveFile(fp);
+            if (this._wavfile.Fmt == null)
             {
-                int r = (int)((Math.Pow(2,16) - 1) / 2); //#Daisukeパッチ
-                var ret = new List<byte>();
-                foreach (var i in fdata)
-                {
-                    var f = i * r;
-                    if (f >= 0)
-                    {
-                        UInt16 v = (UInt16)(Math.Min(Int16.MaxValue, f));
-                        ret.Add((byte)(v & 0xff));
-                        ret.Add((byte)((v >> 8) & 0xff));
-                    }
-                    else
-                    {
-                        UInt16 v =(UInt16)(0xffff + (int)(Math.Max(f, Int16.MinValue)) + 1);
-                        ret.Add((byte)(v & 0xff));
-                        ret.Add((byte)((v >> 8) & 0xff));
-                    }
-                }
-                return ret.ToArray();
+                throw new Exception();
             }
-            throw new ArgumentException("Invalid bits");
-        }
-
-
-        public static (PcmData,IEnumerable<Chunk?>?) Load(Stream fp,IEnumerable<string>? chunks)
-        {
-            var wav=new WaveFile(fp);
-            var fmtc=(FmtChunk?)(wav.Chunk("fmt "));
-            var datac=(RawChunk?)(wav.Chunk("data"));
-            Debug.Assert(fmtc!=null && datac!=null && fmtc.Nchannels == 1);
-
-            var bits=fmtc.Samplewidth;
-            var fs=fmtc.Framerate;
-            if(chunks!=null){
-                var cnk=new List<Chunk?>();
-                foreach(var i in chunks){
-                    cnk.Add(wav.Chunk(i));
-                }
-                return (new PcmData(datac.Data,bits,fs),cnk);
-            }else{
-                return (new PcmData(datac.Data,bits,fs),null);
+            if (this._wavfile.Data == null)
+            {
+                throw new Exception();
             }
         }
-        public static PcmData Load(Stream fp){
-            return PcmData.Load(fp,null).Item1;
-        }
 
-
-        public static void Dump(PcmData src,Stream fp,IEnumerable<Chunk>? chunks=null){
-            // # setting parameters
-            var wf=new WaveFile((int)src.Framerate,(int)(src.SampleBits/8),1,src.Data,chunks);
-            fp.Write(wf.ToChunkBytes());
-        }
-        readonly private int _sample_bits;
-        readonly private uint _frame_rate;
-        readonly private byte[] _frames;
-
-        public PcmData(IEnumerable<byte> frames, int sample_bits, uint frame_rate) 
+        public PcmData(byte[] src, int sample_bits, int frame_rate, List<Chunk>? chunks)
         {
-            this._sample_bits = sample_bits;
-            this._frame_rate = frame_rate;
-            this._frames = frames.ToArray();
-            Debug.Assert((this._frames.Length) % (this._sample_bits / 8) == 0);//   #srcの境界チェック
+            this._wavfile = new WaveFile(frame_rate, sample_bits / 8, 1, src, chunks);
+            Debug.Assert(this._wavfile.Fmt != null);
+            Debug.Assert(this._wavfile.Data != null);
         }
-        public PcmData(IEnumerable<double> frames, int sample_bits, uint frame_rate) :
-            this(Float2bytes(frames, sample_bits), sample_bits, frame_rate)
-        {
-        }
+        public PcmData(byte[] src, int sample_bits, int frame_rate) : this(src, sample_bits, frame_rate, null) { }
+        public PcmData(IPyIterator<double> src, int sample_bits, int frame_rate) : this(src, sample_bits, frame_rate, null) { }
+        public PcmData(IPyIterator<double> src, int sample_bits, int frame_rate, List<Chunk>? chunks) : this(Float2bytes(src, sample_bits), sample_bits, frame_rate, chunks) { }
+        public PcmData(IList<double> src, int sample_bits, int frame_rate) : this(new PyIterator<double>(src), sample_bits, frame_rate, null) { }
 
 
         // """サンプリングビット数
         // """
-        public int SampleBits{
-            get=>this._sample_bits;
+
+        public int SampleBits
+        {
+            get
+            {
+                Debug.Assert(this._wavfile.Fmt != null);
+                return this._wavfile.Fmt.Samplewidth;
+
+            }
         }
         // @property
         // def frame_rate(self)->int:
         //     """サンプリングのフレームレート
         //     """
         //     return self._frame_rate
-        public uint Framerate{
-            get=>this._frame_rate;
-        }
-        // @property
-        // def timelen(self):
-        //     """データの記録時間
-        //     """
-        //     return len(self._frames)/(self._sample_bits//8*self._frame_rate)
-        public float Timelen{
-            get{
-                return this._frames.Length/(this._sample_bits/8*this._frame_rate);
-            }
-        }
-
-
-
-
-        // @property
-        // def byteslen(self)->int:
-        //     """Waveファイルのデータサイズ
-        //     Waveファイルのdataセクションに格納されるサイズです。
-        //     """
-        //     return len(self._frames)
-        public int Byteslen{
-            get{
-                return this._frames.Length;
-            }
-        }
-        // @property
-        // def data(self)->bytes:
-        //     """ 振幅データ
-        //     """
-        //     return self._frames
-        public byte[] Data{
-            get=>this._frames;
-        }
-        
-
-        // def dataAsFloat(self)->Sequence[float]:
-
-        //     data=self._frames
-        //     bits=self._sample_bits
-        //     if bits==8:
-        //         # a=[struct.unpack_from("B",data,i)[0]/256-0.5 for i in range(len(data))]
-        //         # b=list(np.frombuffer(data, dtype="uint8")/256-0.5)
-        //         # print(a==b)
-        //         # return list(np.frombuffer(data, dtype="uint8")/256-0.5)
-        //         return [struct.unpack_from("B",data,i)[0]/255-0.5 for i in range(len(data))]
-        //     elif bits==16:
-        //         assert(len(data)%2==0)
-        //         r=(2**16-1)//2 #Daisukeパッチ
-        //         # a=[struct.unpack_from("<h",data,i*2)[0]/r for i in range(len(data)//2)]
-        //         # b=list(np.frombuffer(data, dtype="int16")/r)
-        //         # print(a==b)
-        //         # return list(np.frombuffer(data, dtype="int16")/r)
-        //         return [struct.unpack_from("<h",data,i*2)[0]/r for i in range(len(data)//2)]
-        //     raise ValueError()
-        public IList<double> DataAsFloat()
+        public int Framerate
         {
-            var data=this._frames;
-            var bits=this._sample_bits;
-            var ret = new List<double>();
-            if(bits==8){
-                foreach(var i in data){
-                    ret.Add(i/255-0.5);
+            get
+            {
+                Debug.Assert(this._wavfile.Fmt != null);
+                return this._wavfile.Fmt.Framerate;
+
+            }
+        }
+        public List<byte> WavData
+        {
+            get
+            {
+                Debug.Assert(this._wavfile.Data != null);
+                return this._wavfile.Data.Data;
+
+            }
+        }
+
+
+
+
+        public int Byteslen
+        {
+            get
+            {
+                Debug.Assert(this._wavfile.Data != null);
+                return this._wavfile.Data.Size;
+            }
+        }
+
+
+        public class DoubleBytesCovertor
+        {
+            /**
+             * [RecovableStopIteratonSAFE]
+             */
+            public class Byte16ToDouble : IPyIterator<double>
+            {
+                private IPyIterator<byte> _src;
+                private int _nod;
+                private byte[] _buf;
+                readonly static double R = (Math.Pow(2, 16) - 1) / 2;//(2 * *16 - 1)//2 #Daisukeパッチ
+                public Byte16ToDouble(IPyIterator<byte> src)
+                {
+                    this._src = src;
+                    this._nod = 0;
+                    this._buf = new byte[2];
                 }
-                return ret;
-            }else if(bits==16){ 
-                Debug.Assert(data.Length%2==0);
-                double r = (Math.Pow(2, 16) - 1) / 2;//(2 * *16 - 1)//2 #Daisukeパッチ
-                int c=0;
-                UInt16 b=0;
-                foreach(var i in data){
-                    b=(UInt16)(b>>8|(i<< 8));
-                    c=(c+1)%2;
-                    if(c==0){
-                        if ((0x8000 & b) == 0){
-                            ret.Add(b / r);
-                        }
-                        else
+                public double Next()
+                {
+                    //2個ためる。
+                    try
+                    {
+                        while (this._nod < 2)
                         {
-                            ret.Add((((Int32)b - 0x0000ffff) - 1)/r);
+                            this._buf[this._nod] = this._src.Next();
+                            this._nod++;
                         }
-                        b=0;
+                    }
+                    catch (RecoverableStopIteration)
+                    {
+                        throw;
+                    }
+                    catch (PyStopIteration)
+                    {
+                        //端数ビットのトラップ
+                        if (this._nod != 0)
+                        {
+                            throw new InvalidDataException("Fractional bytes detected.");
+                        }
+                        throw;
+                    }
+                    this._nod = 0;
+                    //変換
+                    byte[] buf = this._buf;
+                    var b = (UInt16)(buf[0] | ((UInt16)buf[1] << 8));
+                    double ret;
+                    if ((0x8000 & b) == 0)
+                    {
+                        ret = b / R;
+                    }
+                    else
+                    {
+                        ret = (((Int32)b - 0x0000ffff) - 1) / R;
+                        ret = ret > 1 ? 1 : (ret < -1) ? -1 : 0;
+                    }
+                    return ret;
+                }
+
+            }
+            /**
+             * [RecovableStopIteratonSAFE]
+             */
+            public class Byte8ToDouble : IPyIterator<double>
+            {
+                private IPyIterator<byte> _src;
+                public Byte8ToDouble(IPyIterator<byte> src)
+                {
+                    this._src = src;
+                }
+                public double Next()
+                {
+                    return (double)this._src.Next() / 255 - 0.5;
+                }
+            }
+            public class DoubleToByte8 : IPyIterator<byte>
+            {
+                private IPyIterator<double> _src;
+                public DoubleToByte8(IPyIterator<double> src)
+                {
+                    this._src = src;
+                }
+                public byte Next()
+                {
+                    return (byte)(this._src.Next() * 127 + 128);
+                }
+            }
+
+            public class DoubleToByte16 : IPyIterator<byte>
+            {
+                readonly static double R = (Math.Pow(2, 16) - 1) / 2;//(2 * *16 - 1)//2 #Daisukeパッチ
+
+                private IPyIterator<double> _src;
+                private int _c;
+                private byte _ret2;
+                public DoubleToByte16(IPyIterator<double> src)
+                {
+                    this._src = src;
+                    this._c = 0;
+                    this._ret2 = 0;
+                }
+                public byte Next()
+                {
+                    if (this._c > 0)
+                    {
+                        this._c = 0;
+                        return this._ret2;
+                    }
+                    var d = this._src.Next();
+                    var f = d * R;
+                    if (f >= 0)
+                    {
+                        UInt16 v = (UInt16)(Math.Min((double)Int16.MaxValue, f));
+                        this._ret2 = (byte)((v >> 8) & 0xff);
+                        this._c = 1;
+                        return (byte)(v & 0xff);
+                    }
+                    else
+                    {
+                        UInt16 v = (UInt16)(0xffff + (UInt16)(Math.Max(f, (double)Int16.MinValue)) + 1);
+                        this._ret2 = ((byte)((v >> 8) & 0xff));
+                        this._c = 1;
+                        return (byte)(v & 0xff);
                     }
                 }
-                return ret;
+
             }
-            throw new ArgumentException();
+
+            static public IPyIterator<double> ToDouble(IPyIterator<byte> src, int sample_rate)
+            {
+                switch (sample_rate)
+                {
+                    case 8: return new Byte8ToDouble(src);
+                    case 16: return new Byte16ToDouble(src);
+                    default: throw new NotImplementedException("Invalid bits");
+                }
+            }
+            static public IPyIterator<byte> ToBytes(IPyIterator<double> src, int sample_rate)
+            {
+                switch (sample_rate)
+                {
+                    case 8: return new DoubleToByte8(src);
+                    case 16: return new DoubleToByte16(src);
+                    default: throw new NotImplementedException("Invalid bits");
+                }
+            }
         }
+
+
+        public List<double> DataAsFloat()
+        {
+            Debug.Assert(this._wavfile.Data!= null);
+            var s = new PyIterator<byte>(this._wavfile.Data.Data);
+            return Functions.ToList<double>(DoubleBytesCovertor.ToDouble(s,this.Framerate));
+        }
+
+
+
+        static private byte[] Float2bytes(IPyIterator<Double> fdata, int bits)
+        {
+            return Functions.ToArray<byte>(DoubleBytesCovertor.ToBytes(fdata, bits));
+        }
+
+
     }
-
-
-
-
 }

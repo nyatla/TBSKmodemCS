@@ -19,7 +19,7 @@ var src_pcm = new List<double>(mod.ModulateAsBit(payload));
 
 using (var stream = File.Open("../../../step1.cs.wav", FileMode.Create, FileAccess.Write))
 {
-    var pcm=new PcmData(src_pcm,16, (uint)carrier);
+    var pcm=new PcmData(src_pcm,16, carrier);
     PcmData.Dump(pcm, stream);
 }
 

@@ -20,7 +20,7 @@ var wav=Functions.Flatten<double>(padding, mod.Modulate(payload), padding);
 //#save to wave
 using (var stream = File.Open("step6.wav", FileMode.Create, FileAccess.Write))
 {
-    var pcm = new PcmData(wav, 16, (uint)carrier);
+    var pcm = new PcmData(wav, 16, carrier);
     PcmData.Dump(pcm, stream);
 }
 

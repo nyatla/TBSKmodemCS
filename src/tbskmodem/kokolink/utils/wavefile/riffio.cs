@@ -1,558 +1,313 @@
 using System.Diagnostics;
+using System.Drawing;
+using System.Xml.Linq;
 using jp.nyatla.kokolink.compatibility;
 using jp.nyatla.kokolink.types;
 
 
 namespace jp.nyatla.kokolink.utils.wavefile.riffio
 {
-    // """チャンクのベースクラス。
-    // """
-    abstract public class Chunk{
-        protected readonly byte[] _name;
-        protected readonly int _size;
-        // def __init__(self,name:bytes,size:int):
-        //     assert(len(name)==4)
-        //     self._name=name
-        //     self._size=size
-        public Chunk(byte[] name,int size){
-            Debug.Assert(name.Length==4);
-            this._name=name;
-            this._size=size;
-        }
-        public Chunk(string name,int size):
-            this(BinUtils.Ascii2byte(name),size)
-        {
-        }        
-        // @property
-        // def name(self)->bytes:
-        //     return self._name
-        public byte[] Name{
-            get=>this._name;
-        }
-        // @property
-        // def size(self)->int:
-        //     """チャンクのsizeフィールドの値。このサイズはワード境界ではありませぬ。
-        //     ワード境界にそろえるときは、size+size%2を使います。
-        //     """
-        //     return self._size
-        public int Size{
-            get=>this._size;
-        }
-        // @abstractproperty
-        // def data(self)->bytearray:
-        //     """チャンクデータ部分です。このサイズはワード境界ではありませぬ。
-        //     """
-        //     ...
-        abstract public byte[] Data{
-            get;
-        }
-        // def toChunkBytes(self)->bytes:
-        //     """チャンクのバイナリ値に変換します。このデータはワード境界です。
-        //     """
-        //     d=self.data
-        //     if len(d)%2!=0:
-        //         #word境界
-        //         d=d+b"\0"
-        //     return struct.pack("<4sL",self._name,self._size)+d
-        public byte[] ToChunkBytes(){
-            var d=this.Data;
-            var ret=new byte[4+4+d.Length+d.Length%2]; //word境界
-            ret[ret.Length-1]=0;
-            for(var i=0;i<4;i++){
-                ret[i]=this._name[i];
-            }
-            for(var i=0;i<4;i++){
-                ret[i+4]=(byte)(this._size>>(i*8) & 0xff); //LE
-            }
-            for(var i=0;i<d.Length;i++){
-                ret[i+8]=d[i];
-            }
-            return ret;
-        }
-        // def _summary_dict(self)->dict:
-        //     return {"name":self.name,"size":self.size}
-        //public Dictionary<string, object> _Summary_dict(){
-        //    var r=new Dictionary<string,object>();
-        //    r.Add("name",this._name);
-        //    r.Add("size",this._size);
-        //    return r;
-        //}
-        // def __str__(self)->str:
-        //     return str(self._summary_dict())
-        //override public string? ToString(){
-        //    return this._Summary_dict().ToString();
-        //}
-    }
-    // """Formatフィールドを含むChunk構造を格納するクラス
-    // """
-    abstract public class ChunkHeader:Chunk{
-        protected byte[] _form;
-        // def __init__1(self,fp:RawIOBase):
-        //     name,size,form=struct.unpack_from('<4sL4s',fp.read(12))
-        //     super().__init__(name,size)
-        //     self._form=form
-        //     return
-        public ChunkHeader(Stream fp):
-            this(BinUtils.ReadBytes(fp,4),(int)BinUtils.ReadUint32LE(fp),BinUtils.ReadBytes(fp,4))
-        {
-            // using (var br = new System.IO.BinaryReader(fp)){
-            //     var name=br.ReadBytes(4);
-            //     var size=BinUtils.Bytes2Uint32LE(br.ReadBytes(4)); //LE
-            //     var form=br.ReadBytes(4);
-            //     this(name,size,form);
-            // }
-        }
-
-        // def __init__3(self,name:str,size:int,form:bytes):
-        //     # print(name,size,form)
-        //     super().__init__(name,size)
-        //     self._form=form
-        //     return
-        public ChunkHeader(byte[] name,int size,byte[] form):base(name,size)
-        {
-            this._form= form;
-        }
-        public ChunkHeader(string name,int size,string form):
-            this(BinUtils.Ascii2byte(name),size,BinUtils.Ascii2byte(form))
-        {
-        }
-
-        // @property
-        // def form(self)->int:
-        //     return self._form
-        public byte[] Form{
-            get=>this._form;
-        }
-        override public byte[] Data
-        {
-            get=>this._form;
-        }
-
-        // def _summary_dict(self)->dict:
-        //     return dict(super()._summary_dict(),**{"form":self.form})
-        //public Dictionary<string,object> _Summary_dict(){
-        //    var d=base._Summary_dict();
-        //    d.Add("form",this._form);
-        //    return d;
-        //}
-
-    }
-    // """ペイロードをそのまま格納するチャンクです.    
-    // """
-    public class RawChunk:Chunk{
-        // def __init__2(self,name:bytes,data:bytes):
-        //     super().__init__(name,len(data))
-        //     self._data=data
-        readonly protected byte[] _data;
-        public RawChunk(byte[] name,byte[] data):
-            base(name,data.Length)
-        {
-            this._data=data;
-        }
-        public RawChunk(string name,byte[] data): this(BinUtils.Ascii2byte(name), data)
-        {
-        }
-
-        // def __init__3(self,name:bytes,size:int,fp:RawIOBase):
-        //     super().__init__(name,size)
-        //     # data=bytearray()
-        //     # data.extend(fp.read(size))
-        //     data=fp.read(size)
-        //     if size%2!=0:
-        //         fp.read(1) #padding
-        //     self._data=data
-        //     # assert(self.size==len(rawdata)-8)
-        public RawChunk(byte[] name,int size,Stream fp):
-            base(name,size)
-        {
-            var data=BinUtils.ReadBytes(fp, size);
-            if(size%2!=0){
-                BinUtils.ReadBytes(fp,1);//padding
-            }
-            this._data=data;
-        }
-        public RawChunk(string name,int size,Stream fp):
-            this(BinUtils.Ascii2byte(name),size,fp)
-        {
-        }
-
-        // @property
-        // def data(self)->bytes:
-        //     return self._data
-        override public byte[] Data{
-            get=>this._data;
-        }
-    }
-
-    // """fmtチャンクを格納するクラス.
-    // """
-    class FmtChunk : RawChunk {
-
-        const UInt16 WAVE_FORMAT_PCM = 0x0001;
-
-        // def __init__2(self,size:int,fp:RawIOBase):
-        //     super().__init__(b"fmt ",size,fp)
-        //     fmt,ch=struct.unpack("<HH",self._data[0:4])
-        //     if fmt!=WAVE_FORMAT_PCM:
-        //         raise TypeError("Invalid Format FORMAT=%d,CH=%d"%(fmt,ch))
-        //     # print(self.samplewidth)
-        public FmtChunk(int size, Stream fp) :
-            base("fmt ", size, fp)
-        {
-            var fmt = BinUtils.Bytes2Uint16LE(this._data, 0);
-            var ch = BinUtils.Bytes2Uint16LE(this._data, 2);
-            if (fmt != WAVE_FORMAT_PCM) {
-                throw new FormatException();
-            }
-        }
-        private static byte[] FmtChunk_init(int framerate, int samplewidth, int nchannels)
-        {
-            var b = new List<byte>();
-            b.AddRange(BinUtils.Uint16LE2Bytes(WAVE_FORMAT_PCM));
-            b.AddRange(BinUtils.Uint16LE2Bytes(nchannels));
-            b.AddRange(BinUtils.Uint32LE2Bytes(framerate));
-            b.AddRange(BinUtils.Uint32LE2Bytes(nchannels * framerate * samplewidth));
-            b.AddRange(BinUtils.Uint16LE2Bytes(nchannels * samplewidth));
-            b.AddRange(BinUtils.Uint16LE2Bytes(samplewidth * 8));
-            return b.ToArray();
-        }
-        //    def __init__3(self,framerate:int,samplewidth:int,nchannels:int):
-        //         # print(framerate,samplewidth,nchannels)
-        //         d=struct.pack(
-        //             '<HHLLHH',
-        //             WAVE_FORMAT_PCM, nchannels, framerate,
-        //             nchannels * framerate * samplewidth,
-        //             nchannels * samplewidth,samplewidth * 8)
-        //         super().__init__(b"fmt ",d)    
-        public FmtChunk(int framerate, int samplewidth, int nchannels) :
-            base("fmt ", FmtChunk_init(framerate, samplewidth, nchannels))
-        { }
-        // @property
-        // def nchannels(self):
-        //     return struct.unpack("<H",self.data[2:4])[0]
-        public int Nchannels{
-            get=>BinUtils.Bytes2Uint16LE(this._data,2);
-
-        }
-        // @property
-        // def framerate(self):
-        //     return struct.unpack("<L",self.data[4:8])[0]
-        public uint Framerate{
-            get=>BinUtils.Bytes2Uint32LE(this._data,4);
-        }
-        // @property
-        // def samplewidth(self):
-        //     """1サンプルに必要なビット数"""
-        //     return struct.unpack("<H",self.data[14:16])[0]
-        public int Samplewidth{
-            get=>BinUtils.Bytes2Uint16LE(this._data,14);
-        }
-        // def _summary_dict(self)->dict:
-        //     return dict(super()._summary_dict(),**{"frametate":self.framerate,"samplewidth":self.samplewidth})
-        //public Dictionary<string,object> _Summary_dict(){
-        //    var r=base._Summary_dict();
-        //    r.Add("frametate",this.Framerate);
-        //    r.Add("samplewidth",this.Samplewidth);
-        //    return r;
-        //}
-    }
-    // """dataチャンクを格納するクラス
-    // """
-    class DataChunk:RawChunk
+    public class Chunk
     {
-        // def __init__1(self,data:bytes):
-        //     super().__init__(b"data",data)
-        public DataChunk(byte[] data):
-            base("data",data)
+        protected MemBuffer _buf = new MemBuffer();
+        private int _name;
+        private int _size;
+        public Chunk(String name, int size)
         {
+            this._name = this._buf.WriteBytes(name, 4);
+            this._size = this._buf.WriteInt32LE(size);
         }
-        // def __init__2(self,size:int,fp:RawIOBase):
-        //     super().__init__(b"data",size,fp)
-        public DataChunk(int size,Stream fp):
-            base("data",size,fp)
+        public Chunk(IBinaryReader s)
         {
+            this._name = this._buf.WriteBytes(s, 4);
+            this._size = this._buf.WriteBytes(s, 4);
         }
-
-    }
-
-    abstract public class RiffHeader:ChunkHeader{
-        // def __init__2(self,size:int,form:bytes):
-        //     super().__init__(b"RIFF",size,form)
-        public RiffHeader(int size,byte[] form):
-            base(BinUtils.Ascii2byte("RIFF"),size,form)
+        public String Name
         {
-        }
-        public RiffHeader(int size,string form):
-            this(size,BinUtils.Ascii2byte(form))
-        {
-        }
-
-        public RiffHeader(Stream fp):
-            base(fp)
-        {
-            Debug.Assert(BinUtils.IsEqualAsByte(this.Name,"RIFF"));
-        }
-    }
-    // """下位構造をそのまま格納するLIST
-    // """
-    public class RawListChunk:ChunkHeader{
-        readonly private byte[] _payload;
-        // def __init__3(self,size:int,form:bytes,fp:RawIOBase):
-        //     super().__init__(b"LIST",size,form)
-        //     self._payload=fp.read(size)
-        public RawListChunk(int size,byte[] form,Stream fp):
-            base(BinUtils.Ascii2byte("LIST"),size,form)
-        {
-            this._payload = BinUtils.ReadBytes(fp, size);
-        }
-        public RawListChunk(int size,string form,Stream fp):
-            this(size,BinUtils.Ascii2byte(form),fp)
-        {
-        }
-
-        // @property
-        // def data(self)->bytes:
-        //     return super().data+self._payload
-        override public byte[] Data{
-            get=>Functions.Flatten<byte>(base.Data,this._payload);
-        }
-    }
-   // """Info配下のチャンクを格納するクラス
-    // """
-    public class InfoItemChunk:RawChunk{
-        // def __init__2(self,name:bytes,data:bytes):
-        //     assert(len(name)==4)
-        //     super().__init__(name,data)
-        public InfoItemChunk(byte[] name,byte[] data):
-            base(name,data)
-        {
-            Debug.Assert(name.Length==4);
-        }
-        public InfoItemChunk(string name,byte[] data):
-            this(BinUtils.Ascii2byte(name),data)
-        {
-        }
-        // def __init__3(self,name:bytes,size:int,fp:RawIOBase):
-        //     super().__init__(name,size,fp)
-        public InfoItemChunk(byte[] name,int size,Stream fp):
-            base(name,size,fp){
-            Debug.Assert(name.Length==4);
-        }
-        public InfoItemChunk(string name,int size,Stream fp):
-            this(BinUtils.Ascii2byte(name),size,fp){
-            Debug.Assert(name.Length==4);
-        }
-        //    def _summary_dict(self)->dict:
-        //         return dict(super()._summary_dict(),**{"value":self.data})
-        //public Dictionary<string,object> _Summary_dict(){
-        //    var r=base._Summary_dict();
-        //    r.Add("value",this.Data);
-        //    return r;
-        //}        
-    }
-
-    // """
-    // Args:
-    // items
-    //     (タグ名,値)のタプルか、InfoItemChunkオブジェクトの混在シーケンスが指定できます。
-    //     タプルの場合は[0]のフィールドは4バイトである必要があります。
-    // """
-    public class InfoListChunk:ChunkHeader{
-        readonly private IEnumerable<InfoItemChunk> _items;
-
-
-        // def __init__2(self,size:int,fp:RawIOBase):
-        //     super().__init__(b"LIST",size,b"INFO")
-        //     #Infoパーサ
-        //     read_size=4
-        //     items=[]
-        //     while read_size<self._size:
-        //         name,size=struct.unpack_from('<4sL',fp.read(8))
-        //         item=InfoItemChunk(name,size,fp)
-        //         read_size+=size+size%2+8
-        //         items.append(item)
-        //     self._items=items
-        public InfoListChunk(int size,Stream fp):        
-            base("LIST",size,"INFO")
-        {
-            // #Infoパーサ
-            var read_size=4;
-            var items=new List<InfoItemChunk>();
-            while(read_size<this._size){
-                byte[] name=BinUtils.ReadBytes(fp,4);
-                int rsize=(int)BinUtils.ReadUint32LE(fp);
-                var item=new InfoItemChunk(name, rsize, fp);
-                items.Add(item);
-                read_size+= rsize + rsize % 2+8;
-                items.Add(item);
-            }
-            this._items=items;    
-        }
-
-        static private int InfoListChunk_init(IEnumerable<InfoItemChunk> items)
-        {
-            var s = 0;
-            foreach (var i in items)
+            get
             {
-                s += i.Size + i.Size % 2 + 8;
+                return this._buf.AsStr(this._name, 4);
             }
-            return s;
         }
-        public InfoListChunk(IEnumerable<InfoItemChunk> items):
-            base("LIST", InfoListChunk_init(items),"INFO")
+        public int Size
         {
-            this._items=items;
-        }
-        //public InfoListChunk(IEnumerable<ValueTuple<byte[],byte[]>> items):
-        //    this(()=>{
-        //        var d=new List<InfoItemChunk>();
-        //        foreach(var i in items){
-        //            d.Add(new InfoItemChunk(i[0],i[1]));
-        //        }
-        //    }())
-        //{
-        //}
-        // @property
-        // def data(self)->bytes:
-        //     payload=b"".join([i.toChunkBytes() for i in self._items])
-        //     return super().data+payload
-        override public byte[] Data{
-            get{
-                var b=new List<byte>();
-                b.AddRange(base.Data);
-                foreach (var i in this._items){
-                    b.AddRange(i.ToChunkBytes());
-                }
-                return b.ToArray();
+            get
+            {
+                return this._buf.AsInt32LE(this._size);
             }
         }
-        // @property
-        // def items(self)->Sequence[InfoItemChunk]:
-        //     return self._items
-        public IEnumerable<InfoItemChunk> Items{
-            get{
-                return this._items;
-            }
+
+        virtual public int Dump(IBinaryWriter writer)
+        {
+            return this._buf.Dump(writer);
         }
-        // def _summary_dict(self)->dict:
-        //     return dict(super()._summary_dict(),**{"info":[i._summary_dict() for i in self.items]})        
-        //public Dictionary<string,object> _Summary_dict(){
-        //    var r=base._Summary_dict();
-        //    var sub=new List<Dictionary<string, object>>;
-        //    foreach(var i in this._items){
-        //        sub.Add(i);
-        //    }
-        //    r.Add("info",sub);
-        //    return r;
-        //}
+    }
+    public class RawChunk : Chunk
+    {
+        private int _data;
+        public RawChunk(String name, byte[] data) : base(name, data.Length)
+        {
+            this._data = this._buf.WriteBytes(data, data.Length % 2);
+        }
+        public RawChunk(String name, int size, IBinaryReader fp) : base(name, size)
+        {
+            this._data = this._buf.WriteBytes(fp, this.Size + this.Size % 2);
+        }
+
+        public List<byte> Data
+        {
+            get { return this._buf.GetRange(this._data, this._buf.Count - this._data); }
+        }
+
     }
 
-    class WaveFile:RiffHeader{
-        readonly private IList<Chunk> _chunks;
 
 
-        public WaveFile(Stream fp):
-            base(fp)
+    public class FmtChunk : Chunk
+    {
+        public const int CHUNK_SIZE = 2 + 2 + 4 + 4 + 2 + 2;
+        private const int WAVE_FORMAT_PCM = 0x0001;
+        public FmtChunk(int size, IBinaryReader fp) : base("fmt ", size)
+
         {
-            Debug.Assert(BinUtils.IsEqualAsByte(this._form,"WAVE"));
-            var read_size=4;
-            var chunks=new List<Chunk>();
-            while(read_size<this._size){
-                byte[] name = BinUtils.ReadBytes(fp, 4);
-                int size = (int)BinUtils.ReadUint32LE(fp);
-                read_size +=size+(size%2)+8;
-                if(BinUtils.IsEqualAsByte(name,"fmt ")){
-                    chunks.Add(new FmtChunk(size,fp));
-                }else if(BinUtils.IsEqualAsByte(name,"data")){
-                    chunks.Add(new DataChunk(size,fp));
-                }else if(BinUtils.IsEqualAsByte(name,"LIST")){
-                    byte[] fmt=BinUtils.ReadBytes(fp,4);
-                    if(BinUtils.IsEqualAsByte(fmt,"INFO")){
-                        chunks.Add(new InfoListChunk(size,fp));
-                    }else{
-                        chunks.Add(new RawListChunk(size,fmt,fp));
-                    }
-                }else{
-                    chunks.Add(new RawChunk(name,size,fp));
-                }
+            this._buf.WriteBytes(fp, 2);
+            this._buf.WriteBytes(fp, 2);
+            this._buf.WriteBytes(fp, 4);
+            this._buf.WriteBytes(fp, 4);
+            this._buf.WriteBytes(fp, 2);
+            this._buf.WriteBytes(fp, 2);
+        }
+        public FmtChunk(int framerate, int samplewidth, int nchannels) : base("fmt ", FmtChunk.CHUNK_SIZE)
+        {
+            this._buf.WriteInt16LE(WAVE_FORMAT_PCM); //+0
+            this._buf.WriteInt16LE(nchannels);//+2
+            this._buf.WriteInt32LE(framerate);//+4
+            this._buf.WriteInt32LE(nchannels * framerate * samplewidth);//+8
+            this._buf.WriteInt16LE(nchannels * samplewidth);//+12
+            this._buf.WriteInt16LE(samplewidth * 8);//+14
+        }
+        public int Nchannels
+        {
+            get
+            {
+                return this._buf.AsInt16LE(2 + 8);
             }
-            this._chunks=chunks;
         }
 
-
-
-        static private List<Chunk> WaveFile_init2(int samplerate, int samplewidth, int nchannel, byte[] frames, IEnumerable<Chunk>? extchunks)
+        public int Framerate
         {
-            if (frames.Length % (samplewidth * nchannel) != 0)
+            get
             {
-                throw new ArgumentException(string.Format("fammes length {0}%(samplewidth {1} * nchannel {2})", frames, samplewidth, nchannel));
+                return this._buf.AsInt32LE(4 + 8);
             }
-            var fmt_chunk = new FmtChunk(samplerate, samplewidth, nchannel);
-            var data_chunk = new DataChunk(frames);
-            var chunks = new List<Chunk>(new Chunk[] { fmt_chunk, data_chunk });
+        }
+
+        public int Samplewidth
+        {
+            get
+            {
+                return this._buf.AsInt16LE(14 + 8);
+            }
+        }
+    }
+
+    public class DataChunk : RawChunk
+    {
+
+        public DataChunk(int size, IBinaryReader fp) : base("data", size, fp)
+
+        {
+        }
+        public DataChunk(byte[] data) : base("data", data)
+        {
+        }
+    }
+
+
+
+
+
+public class ChunkHeader : Chunk
+    {
+        private int _form;
+        public ChunkHeader(IBinaryReader fp) : base(fp)
+        {
+            this._form = this._buf.WriteBytes(fp, 4);
+        }
+        public ChunkHeader(String name, int size, IBinaryReader fp) : base(name, size)
+        {
+            this._form = this._buf.WriteBytes(fp, 4);
+        }
+        public ChunkHeader(String name, int size, String form) : base(name, size)
+        {
+            this._form = this._buf.WriteBytes(form, 4);
+        }
+        public String Form 
+        {
+            get
+            {
+                return this._buf.AsStr(this._form, 4);
+            }
+        }
+    }
+
+    public class RiffHeader : ChunkHeader
+    {
+
+        public RiffHeader(IBinaryReader fp) : base(fp)
+        {
+            if (this.Name.CompareTo("RIFF") != 0)
+            {
+                throw new IOException("Invalid RIFF header");
+            }
+        }
+        public RiffHeader(int size, String form) : base("RIFF", size, form)
+        {
+        }
+    }
+
+
+    public class RawListChunk : ChunkHeader
+    {
+        private int _payload;
+        private int _payload_len;
+        public RawListChunk(int size, IBinaryReader fp) : base("LIST", size, fp)
+
+        {
+            this._payload_len = this.Size - 4;
+            this._payload = this._buf.WriteBytes(fp, this._payload_len);
+        }
+        public RawListChunk(String form, Byte[] payload, int payload_len) : base("LIST", payload_len + 4, form)
+        {
+            this._payload_len = this.Size - 4;
+            this._payload = this._buf.WriteBytes(payload);
+        }
+        public byte[] Payload
+        {
+            get
+            {
+                return this._buf.AsBytes(this._payload, this._payload_len);
+
+            }
+        }
+    }
+
+    public class WaveFile : RiffHeader
+    {
+        private List<Chunk> _chunks;
+        public WaveFile(IBinaryReader fp) : base(fp)
+        {
+            this._chunks = new List<Chunk>();
+            Debug.Assert(this.Form.CompareTo("WAVE") == 0);
+            var chunk_size = this.Size;
+            chunk_size -= 4;//fmt分
+            while (chunk_size > 8)
+            {
+                String name = System.Text.ASCIIEncoding.ASCII.GetString(fp.ReadBytes(4));
+
+                int size = fp.ReadInt32LE();
+                chunk_size -= 8 + size + (size % 2);
+                if (name.CompareTo("fmt ") == 0)
+                {
+                    this._chunks.Add(new FmtChunk(size, fp));
+                }
+                else if (name.CompareTo("data") == 0)
+                {
+                    this._chunks.Add(new DataChunk(size, fp));
+                }
+                else if (name.CompareTo("LIST") == 0)
+                {
+                    this._chunks.Add(new RawListChunk(size, fp));
+                }
+                else
+                {
+                    this._chunks.Add(new RawChunk(name, size, fp));
+                }
+            }
+        }
+        public static int ToSize(int frames_len, List<Chunk>? extchunks)
+        {
+            int s = 4;//form
+            s = s + FmtChunk.CHUNK_SIZE + 8;
+            s = s + frames_len + 8;
             if (extchunks != null)
             {
-                chunks.AddRange(extchunks);
-            }
-            return chunks;
-        }
-        static private int WaveFile_init3(IEnumerable<Chunk> chunks)
-        {
-            var s = 4;
-            foreach (var i in chunks)
-            {
-                s = s + i.Size + i.Size % 2 + 8;
+                for (int i = 0; i < extchunks.Count; i++)
+                {
+                    var cs = extchunks[i].Size;
+                    s = s + cs + cs % 2 + 8;
+                }
             }
             return s;
         }
+        public WaveFile(int samplerate, int samplewidth, int nchannel, Byte[] frames, List<Chunk>? extchunks) : base(ToSize(frames.Length, extchunks), "WAVE")
 
-
-
-        public WaveFile(IList<Chunk> chunks) : base(WaveFile_init3(chunks), "WAVE")
         {
-            this._chunks = chunks;
-        }
-
-        public WaveFile(int samplerate,int samplewidth,int nchannel,byte[] frames,IEnumerable<Chunk>? extchunks=null):
-            this(WaveFile_init2(samplerate,samplewidth,nchannel,frames, extchunks: extchunks))
-        {
-        }
-        // @property
-        // def data(self)->bytes:
-        //     payload=b"".join([i.toChunkBytes() for i in self._chunks])
-        //     return super().data+payload
-       override  public byte[] Data{
-            get{
-                var b=new List<byte>();
-                b.AddRange(base.Data);
-
-                foreach (var i in this._chunks){
-                    b.AddRange(i.ToChunkBytes());
+            this._chunks = new List<Chunk>();
+            this._chunks.Add(new FmtChunk(samplerate, samplewidth, nchannel));
+            this._chunks.Add(new DataChunk(frames));
+            if (extchunks != null)
+            {
+                for (var i = 0; i < extchunks.Count; i++)
+                {
+                    this._chunks.Add(extchunks[i]);
                 }
-                return b.ToArray();
             }
         }
-        //""" nameに一致するchunkを返します。
-        //    Return:
-        //        チャンクが見つかればチャンクオブジェクトを返します。なければNoneです。
-        //"""
-        public Chunk? Chunk(byte[] name){
-            foreach(var i in this._chunks){
-                if(i.Name.SequenceEqual(name)){
-                    return i;
+
+
+
+
+        public DataChunk? Data
+        {
+            get
+            {
+                var ret = this.GetChunk("data");
+                if (ret == null)
+                {
+                    return null;
+                }
+                return (DataChunk)ret;
+
+            }
+        }
+        public FmtChunk? Fmt
+        {
+            get
+            {
+                var ret = this.GetChunk("fmt ");
+                if (ret == null)
+                {
+                    return null;
+                }
+                return (FmtChunk)ret;
+
+            }
+
+        }
+
+
+        public Chunk? GetChunk(String name)
+        {
+            for (var i = 0; i < this._chunks.Count; i++)
+            {
+                if (this._chunks[i].Name.CompareTo(name) == 0)
+                {
+                    return this._chunks[i];
                 }
             }
             return null;
         }
-        public Chunk? Chunk(string name)
+        override public int Dump(IBinaryWriter writer)
         {
-            return this.Chunk(BinUtils.Ascii2byte(name));
+            int ret = 0;
+            ret += base.Dump(writer);
+            for (var i = 0; i < this._chunks.Count; i++)
+            {
+                ret += this._chunks[i].Dump(writer);
+            }
+            return ret;
         }
-        // def __str__(self):
-        //     return str([str(i) for i in self._chunks])
-        //public string ToString(){
-        //    return this._chunks.ToString();
-        //}
     }
 
 // if __name__ == '__main__':
@@ -606,8 +361,5 @@ namespace jp.nyatla.kokolink.utils.wavefile.riffio
 //         src=f.read()
 //         r=WaveFile(BytesIO(src))
 //         print(r)
-
-
-
 
 }

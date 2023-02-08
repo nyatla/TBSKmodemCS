@@ -40,7 +40,7 @@ namespace jp.nyatla.kokolink.io.audioif
         //    }
         //    return l;
         //}
-        public NAudioPlayer(PcmData src, int device_no = -1) : this(src.Data, src.SampleBits, (int)src.Framerate, 1,device_no:device_no)
+        public NAudioPlayer(PcmData src, int device_no = -1) : this(src.WavData, src.SampleBits, (int)src.Framerate, 1,device_no:device_no)
         {
         }
 
@@ -151,14 +151,13 @@ namespace jp.nyatla.kokolink.io.audioif
             {
                 while(!this._q.TryAdd(v,0))
                 {
-                    double tmp;
-                    this._q.TryTake(out tmp,0);
+                    this._q.TryTake(out double tmp,0);
                 }
                 lock(this._rms){
                     this._rms.Update(v);
                 }
             }
-            public double rms
+            public double Rms
             {
                 get { lock (this._rms) { return this._rms.GetLastRms(); } }
             }
@@ -184,7 +183,7 @@ namespace jp.nyatla.kokolink.io.audioif
             {
                 Debug.Assert(s.Length % 2 == 0);
                 double r = (Math.Pow(2, 16) - 1) / 2;//(2 * *16 - 1)//2 #Daisukeパッチ
-                for (var i = 0; i < s.Length; i = i + 2)
+                for (var i = 0; i < s.Length; i += 2)
                 {
                     var a1 = s[i];
                     var a2 = s[i + 1];
@@ -213,7 +212,7 @@ namespace jp.nyatla.kokolink.io.audioif
         private WaveInEvent? _wi;
         private bool _play_now;
         //private Semaphore _se = new Semaphore(1,1);
-        private int _bits_par_sample;
+        readonly private int _bits_par_sample;
         public static IList<(int id, string name)> GetDevices()
         {
             var l = new List<(int id, string name)>();
@@ -327,9 +326,9 @@ namespace jp.nyatla.kokolink.io.audioif
                 Thread.Sleep(100);
             }
         }
-        public double getRms()
+        public double GetRms()
         {
-            return this._q.rms;
+            return this._q.Rms;
         }
     }
 
