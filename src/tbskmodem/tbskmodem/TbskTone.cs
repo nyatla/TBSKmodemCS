@@ -54,6 +54,11 @@ namespace jp.nyatla.tbaskmodem
             return new MSeqTone(new MSequence(bits, tap), base_tone);
         }
 
+        public static MSeqTone CreateCostom(IEnumerable<double> patt)
+        {
+            return new TraitTone(patt);
+        }
+
     }
 
 
