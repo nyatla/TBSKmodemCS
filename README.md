@@ -3,7 +3,7 @@
 Japanese documente 👉[Readme.md](Readme.md)
 
 This is pure C# implementation of TBSKmodem.
-🐓[TBSKmodem](https://github.com/nyatla/TBSKmodem.en)
+🐓[TBSKmodem](https://github.com/nyatla/TBSKmodem)
 
 
 TBSK (Trait Block Shift Keying) modem is a low-speed, short-range audio communication implementation without FFT/IFTT.
@@ -14,7 +14,7 @@ There is a library for development and a console script [tbskmodem](tbskmodem.md
 
 ![preview_tbsk](https://user-images.githubusercontent.com/2483108/194768184-cecddff0-1fa4-4df8-af3f-f16ed4ef1718.gif)
 
-See [Youtube](https://www.youtube.com/watch?v=4cB3hWATDUQ) with modulated sound.🎵
+See [Youtube](https://www.youtube.com/watch?v=4cB3hWATDUQ) with modulated sound.
 
 ※This is python demonstration.
 
@@ -40,9 +40,7 @@ Clone the sorce code from github.
 
 TBSKmodemCS has some getstarted samples project. Open TBSKmodem.sln and click getstarted folder.
 
-Check to the python version for the explanation of the sample.
 
-[TBSKmodem#Location of sample scripts](https://github.com/nyatla/TBSKmodem#%E3%82%B5%E3%83%B3%E3%83%97%E3%83%AB%E3%83%97%E3%83%AD%E3%82%B0%E3%83%A9%E3%83%A0%E3%81%AE%E5%A0%B4%E6%89%80)
 
 
 1. step1_modulate - Modulate to wave file

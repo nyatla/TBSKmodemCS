@@ -115,26 +115,33 @@ namespace jp.nyatla.kokolink.utils.math.corrcoef
             var meanx_ = sumxi_ / (this.n);
             var sumxi2_ = ((double)this.sumxi2) / (1 << FP);
             var v = (sumxi2_ + (meanx_ * meanx_) * this.n - 2 * meanx_ * sumxi_);
-            if (v < 0)
+            if (v <= 0)
             {
-                v = 0;
+                return 0;
             }
             var stdx = Math.Sqrt(v / (this.n - 1));
+            if (stdx < (1.0/ (1 << FP))){
+                return 0;
+            }
 
             var sumyi_ = ((double)this.sumyi) / (1 << FP);
             var meany_ = sumyi_ / (this.n);
             var sumyi2_ = ((double)this.sumyi2) / (1 << FP);
             v = (sumyi2_ + (meany_ * meany_) * this.n - 2 * meany_ * sumyi_);
-            if (v < 0)
+            if (v <= 0)
             {
-                v = 0;
+                return 0;
             }
             var stdy = Math.Sqrt(v / (this.n - 1));
+            if (stdy < (1.0 / (1 << FP)))
+            {
+                return 0;
+            }
 
             var sumxiyi_ = ((double)(this.sumxiyi)) / (1 << FP);
             v = sumxiyi_ + this.n * meanx_ * meany_ - meany_ * sumxi_ - meanx_ * sumyi_;
             var covxy = v / (this.n - 1);
-            var r = stdx * stdy == 0 ? 0 : covxy / (stdx * stdy);
+            var r = covxy / (stdx * stdy);
             return r > 1 ? 1f : (r < -1 ? -1 : r);
         }
     }

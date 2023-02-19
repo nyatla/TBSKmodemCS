@@ -83,7 +83,7 @@ namespace jp.nyatla.kokolink.protocol.tbsk.tbaskmodem
 
 
 
-        readonly private TraitTone _tone;
+        readonly protected TraitTone _tone;
         readonly private Preamble _preamble;
         readonly private TraitBlockEncoder _enc;
         public TbskModulator_impl(TraitTone tone, Preamble? preamble = null)
@@ -97,14 +97,21 @@ namespace jp.nyatla.kokolink.protocol.tbsk.tbaskmodem
             this._enc = new TraitBlockEncoder(tone);
             this._tone = tone;
         }
-        public IPyIterator<double> ModulateAsBit(IPyIterator<int> src)
+        public IPyIterator<double> ModulateAsBit(IPyIterator<int> src,IPyIterator<double>? suffix = null,bool suffix_pad= true)
         {
             var ave_window_shift = Math.Max((int)(this._tone.Count * 0.1), 2) / 2; //#検出用の平均フィルタは0.1*len(tone)//2だけずれてる。ここを直したらTraitBlockDecoderも直せ
-            return new IterChain<double>(
-                this._preamble.GetPreamble(),
-                this._enc.SetInput(new DiffBitEncoder(0, new BitStream(src, 1))),
-                new Repeater<double>(0, ave_window_shift)    //#demodulatorが平均値で補正してる関係で遅延分を足してる。
-            );
+            IList<IPyIterator<double>> l= new List<IPyIterator<double>>();
+            l.Add(this._preamble.GetPreamble());
+            l.Add(this._enc.SetInput(new DiffBitEncoder(0, new BitStream(src, 1))));
+            if (suffix != null)
+            {
+                l.Add(suffix);
+            }
+            if (suffix_pad)
+            {   //#demodulatorが平均値で補正してる関係で遅延分を足してる。
+                l.Add(new Repeater<double>(0, ave_window_shift));
+            }
+            return new IterChain<double>(l.ToArray());
         }
     }
 

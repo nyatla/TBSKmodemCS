@@ -5,6 +5,7 @@ using jp.nyatla.kokolink.protocol.tbsk.preamble;
 using jp.nyatla.kokolink.protocol.tbsk.toneblock;
 using jp.nyatla.kokolink.compatibility;
 using jp.nyatla.kokolink.protocol.tbsk.tbaskmodem;
+using jp.nyatla.kokolink.types;
 
 namespace jp.nyatla.tbaskmodem
 {
@@ -24,15 +25,42 @@ namespace jp.nyatla.tbaskmodem
         public TbskModulator(TraitTone tone, Preamble preamble) : base(tone, preamble)
         {
         }
-
-
-
-        public IEnumerable<double> ModulateAsBit(IEnumerable<int> src)
+        private class SuffixTone: IPyIterator<double>
         {
+            private TraitTone _tone;
+            private int _c = 0;
+            public SuffixTone(TraitTone tone)
+            {
+                this._tone = tone;
+                this._c = 0;
+            }
+            public double Next()
+            {
+                var c = this._c;
+                if (c >= this._tone.Count)
+                {
+                    throw new PyStopIteration();
+                }
+                var tone = this._tone;
+                var r = c % 2 == 0 ? tone[c] * 0.5 : -tone[c] * 0.5;
+                this._c++;
+                return r;
+            }
+
+        }
+
+
+        public IEnumerable<double> ModulateAsBit(IEnumerable<int> src, bool stopsymbol = true)
+        {
+            SuffixTone? suffix=null;
+            if (stopsymbol)
+            {
+                suffix = new SuffixTone(this._tone);
+            }
             //既にIPyIteratorを持っていたらそのまま使う。
             return SequentialEnumerable<double>.CreateInstance(
-                base.ModulateAsBit(Functions.ToPyIter<int>(src))
-                );
+                base.ModulateAsBit(Functions.ToPyIter<int>(src),suffix:suffix)
+            );
         }
 
 
@@ -58,25 +86,39 @@ namespace jp.nyatla.tbaskmodem
 
 
 
-        public ISequentialEnumerable<double> Modulate(IEnumerable<int> src, int bitwidth = 8)
+        public ISequentialEnumerable<double> Modulate(IEnumerable<int> src, int bitwidth = 8, bool stopsymbol= true)
         {
+            SuffixTone? suffix = null;
+            if (stopsymbol)
+            {
+                suffix = new SuffixTone(this._tone);
+            }
             //既にIPyIteratorを持っていたらそのまま使う。
-            return SequentialEnumerable<double>.CreateInstance(
-                this.ModulateAsBit(
-                new BitsWidthFilter(bitwidth).SetInput(new RoStream<int>(Functions.ToPyIter<int>(src)))
-                ));
+            return SequentialEnumerable<double>.CreateInstance(base.ModulateAsBit(
+                new BitsWidthFilter(bitwidth).SetInput(new RoStream<int>(Functions.ToPyIter<int>(src))),suffix:suffix
+            ));
         }
-        public ISequentialEnumerable<double> Modulate(IEnumerable<byte> src)
+        public ISequentialEnumerable<double> Modulate(IEnumerable<byte> src, bool stopsymbol = true)
         {
+            SuffixTone? suffix = null;
+            if (stopsymbol)
+            {
+                suffix = new SuffixTone(this._tone);
+            }
             //既にIPyIteratorを持っていたらそのまま使う。
             return SequentialEnumerable<double>.CreateInstance(this.ModulateAsBit(
-                new BitsWidthFilter(8).SetInput(new ByteStream(Functions.ToPyIter<byte>(src)))
+                new BitsWidthFilter(8).SetInput(new ByteStream(Functions.ToPyIter<byte>(src))), suffix: suffix
                 ));
         }
-        public ISequentialEnumerable<double> Modulate(string src, string encoding = "utf-8")
+        public ISequentialEnumerable<double> Modulate(string src, string encoding = "utf-8", bool stopsymbol = true)
         {
+            SuffixTone? suffix = null;
+            if (stopsymbol)
+            {
+                suffix = new SuffixTone(this._tone);
+            }
             return SequentialEnumerable<double>.CreateInstance(this.ModulateAsBit(
-                new BitsWidthFilter(8).SetInput(new ByteStream(src, encoding: encoding))
+                new BitsWidthFilter(8).SetInput(new ByteStream(src, encoding: encoding)), suffix: suffix
                 ));
         }
     }

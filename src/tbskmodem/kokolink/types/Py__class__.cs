@@ -41,7 +41,7 @@ namespace jp.nyatla.kokolink.types
     {
         readonly private IPyIterator<IPyIterator<T>> _src;
         private IPyIterator<T>? _current;
-        public IterChain(params IPyIterator<T>[] src)
+        public IterChain(IPyIterator<T>[] src)
         {
             this._src = new PyIterator<IPyIterator<T>>(src);
             this._current = null;
