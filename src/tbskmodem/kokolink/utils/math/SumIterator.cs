@@ -6,7 +6,7 @@ using jp.nyatla.kokolink.types;
 using jp.nyatla.kokolink.utils.recoverable;
 // T=TypeVar("T")
 
-namespace jp.nyatla.kokolink.utils
+namespace jp.nyatla.kokolink.utils.math
 {
     // """ ストリームの読み出し位置から過去N個の合計を返すイテレータです。
     //     このイテレータはRecoverableStopInterationを利用できます。
