@@ -69,9 +69,16 @@ namespace jp.nyatla.tbaskmodem
 
 
 
-        public TbskDemodulator(TraitTone tone, Preamble? preamble = null):base(tone,preamble)
+        public TbskDemodulator(TraitTone tone):base(tone,null)
         {
         }
+        public TbskDemodulator(TraitTone tone, double preamble_th, int preamble_cycle):base(tone,new CoffPreamble(tone,threshold:preamble_th,cycle:preamble_cycle))
+        {
+        }
+        public TbskDemodulator(TraitTone tone, Preamble preamble) : base(tone, preamble)
+        {
+        }
+
 
 
         public class DemodulateAsIntAS : AsyncDemodulateX<int>

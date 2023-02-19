@@ -1,11 +1,7 @@
-using System.Collections;
 using System.Diagnostics;
-using jp.nyatla.kokolink.interfaces;
 using jp.nyatla.kokolink.streams;
 using jp.nyatla.kokolink.filter;
-using jp.nyatla.kokolink.types;
 using jp.nyatla.kokolink.protocol.tbsk.preamble;
-using jp.nyatla.kokolink.streams.rostreams;
 using jp.nyatla.kokolink.protocol.tbsk.toneblock;
 using jp.nyatla.kokolink.compatibility;
 using jp.nyatla.kokolink.protocol.tbsk.tbaskmodem;
@@ -13,14 +9,23 @@ using jp.nyatla.kokolink.protocol.tbsk.tbaskmodem;
 namespace jp.nyatla.tbaskmodem
 {
 
-    // """ TBSKの変調クラスです。
-    //     プリアンブルを前置した後にビットパターンを置きます。
-    // """
+    /**
+     * Preamble
+     */
     public class TbskModulator : TbskModulator_impl
     {
-        public TbskModulator(TraitTone tone, Preamble? preamble = null):base(tone,preamble)
+        public TbskModulator(TraitTone tone):base(tone,null)
         {
         }
+        public TbskModulator(TraitTone tone, int preamble_cycle) : base(tone, new CoffPreamble(tone,cycle:preamble_cycle))
+        {
+        }
+
+        public TbskModulator(TraitTone tone, Preamble preamble) : base(tone, preamble)
+        {
+        }
+
+
 
         public IEnumerable<double> ModulateAsBit(IEnumerable<int> src)
         {

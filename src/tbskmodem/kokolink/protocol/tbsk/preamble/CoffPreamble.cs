@@ -2,10 +2,11 @@
 
 using System.Diagnostics;
 using jp.nyatla.kokolink.interfaces;
-using jp.nyatla.kokolink.utils;
 using jp.nyatla.kokolink.streams;
 using jp.nyatla.kokolink.types;
 
+using jp.nyatla.kokolink.utils;
+using jp.nyatla.kokolink.utils.math;
 using jp.nyatla.kokolink.utils.math.corrcoef;
 using jp.nyatla.kokolink.utils.recoverable;
 using jp.nyatla.kokolink.compatibility;
@@ -65,7 +66,7 @@ namespace jp.nyatla.kokolink.protocol.tbsk.preamble
         public class WaitForSymbolAS : AsyncMethod<int?>{
             readonly private CoffPreamble _parent;
             readonly private BufferedIterator<double> _cof;
-            readonly private AverageInterator _avi;
+            readonly private AverageIterator _avi;
             readonly private int _sample_width;
             readonly private int _cofbuf_len;
             readonly private int _symbol_ticks;
@@ -85,7 +86,7 @@ namespace jp.nyatla.kokolink.protocol.tbsk.preamble
                 //# cofbuf_len=symbol_ticks*10
                 this._parent = parent;
                 this._cof = new BufferedIterator<double>(ISelfCorrcoefIterator.CreateNormalized(symbol_ticks, src, symbol_ticks), cofbuf_len, 0);
-                this._avi = new AverageInterator(this._cof, symbol_ticks);
+                this._avi = new AverageIterator(this._cof, symbol_ticks);
                 var sample_width = parent._cycle + 1;
                 //# rb=RingBuffer(symbol_ticks*3,0)
                 this._sample_width = sample_width;

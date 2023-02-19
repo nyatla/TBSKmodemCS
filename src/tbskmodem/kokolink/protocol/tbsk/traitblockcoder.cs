@@ -3,7 +3,7 @@ using jp.nyatla.kokolink.utils.recoverable;
 using jp.nyatla.kokolink.streams.rostreams;
 using jp.nyatla.kokolink.utils.math.corrcoef;
 using jp.nyatla.kokolink.types;
-using jp.nyatla.kokolink.utils;
+using jp.nyatla.kokolink.utils.math;
 using jp.nyatla.kokolink.protocol.tbsk.toneblock;
 
 
@@ -84,7 +84,7 @@ namespace jp.nyatla.kokolink.protocol.tbsk.traitblockcoder
     public class TraitBlockDecoder: BasicRoStream<int>,IBitStream,IDecoder<TraitBlockDecoder,IRoStream<double>,int>
     {
         private readonly int _trait_block_ticks;
-        private AverageInterator? _avefilter;
+        private AverageIterator? _avefilter;
         readonly private double _threshold;
         private bool _is_eos;
         private Int64 _pos;
@@ -119,7 +119,7 @@ namespace jp.nyatla.kokolink.protocol.tbsk.traitblockcoder
                 this._is_eos = false;
                 this._cof = ISelfCorrcoefIterator.CreateNormalized(this._trait_block_ticks, src, this._trait_block_ticks);
                 var ave_window = Math.Max((int)(this._trait_block_ticks * 0.1), 2);// #検出用の平均フィルタは0.1*len(tone)//2だけずれてる。個々を直したらtbskmodem#TbskModulatorも直せ
-                this._avefilter = new AverageInterator(this._cof, ave_window);
+                this._avefilter = new AverageIterator(this._cof, ave_window);
                 this._last_data = 0;
 
                 this._preload_size = this._trait_block_ticks + ave_window / 2 - 1;    //#平均値フィルタの初期化サイズ。ave_window/2足してるのは、平均値の遅延分.
