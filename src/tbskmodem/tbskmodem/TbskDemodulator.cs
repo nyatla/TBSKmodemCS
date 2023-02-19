@@ -150,9 +150,8 @@ namespace jp.nyatla.tbaskmodem
             Debug.Assert(!this._asmethod_lock);
             DemodulateAsByteAS asmethod = new DemodulateAsByteAS(this, src);
             if (asmethod.Run())
-            {
-                Debug.Assert(asmethod.Result != null);
-                return SequentialEnumerable<byte>.CreateInstance(asmethod.Result);
+            {                
+                return asmethod.Result == null?null: SequentialEnumerable<byte>.CreateInstance(asmethod.Result);
             }
             else
             {
@@ -180,8 +179,7 @@ namespace jp.nyatla.tbaskmodem
             DemodulateAsStrAS asmethod = new DemodulateAsStrAS(this, src, encoding);
             if (asmethod.Run())
             {
-                Debug.Assert(asmethod.Result != null);
-                return SequentialEnumerable<char>.CreateInstance(asmethod.Result);
+                return asmethod.Result == null ? null : SequentialEnumerable<char>.CreateInstance(asmethod.Result);
             }
             else
             {
@@ -197,8 +195,7 @@ namespace jp.nyatla.tbaskmodem
             DemodulateAsHexStrAS asmethod = new DemodulateAsHexStrAS(this, src);
             if (asmethod.Run())
             {
-                Debug.Assert(asmethod.Result != null);
-                return SequentialEnumerable<string>.CreateInstance(asmethod.Result);
+                return asmethod.Result == null ? null : SequentialEnumerable<string>.CreateInstance(asmethod.Result);
             }
             else
             {
