@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using System.Diagnostics;
 using jp.nyatla.kokolink.types;
 
@@ -47,50 +45,37 @@ namespace jp.nyatla.kokolink.utils{
                 this.Append(i);
             }
         }
-        /** リストの一部を切り取って返します。
-            この関数はバッファの再配置を行いません。
-        */    
-        public T[] Sublist(int pos,int size){
-            var l=this._buf.Length;
-            if(pos>=0){
-                var p=this._p+pos;
-                if(size>=0){
-                    Debug.Assert(pos+size<=l);
-                    var ret=new T[size];
-                    for(var i=0;i<size;i++){
-                        ret[i]=this._buf[(p+i)%l];
-                    }
-                    return ret;
-                }else{
-                    Debug.Assert(pos+size+1>=0);
-                    var ret=new T[-size];
-                    // return tuple([self._buf[(p+size+i+1)%l] for i in range(-size)])
-                    for(var i=0;i<-size;i++){
-                        ret[i]=this._buf[(p+size+i+1)%l];
-                    }
-                    return ret;
-                }
-            }else{
-                var p=this._p+l+pos;
-                if(size>=0){
-                    Debug.Assert(l+pos+size<=l);
-                    // return tuple([self._buf[(p+i)%l] for i in range(size)])
-                    var ret=new T[size];
-                    for(var i=0;i<size;i++){
-                        ret[i]=this._buf[(p+i)%l];
-                    }
-                    return ret;
-                }else{
-                    Debug.Assert(l+pos+size+1>=0);
-                    // return tuple([self._buf[(p-i+l)%l] for i in range(-size)])
-                    var ret=new T[size];
-                    for(var i=0;i<-size;i++){
-                        ret[i]=this._buf[(p-i+l)%l];
-                    }
-                    return ret;
-                }
+        private class Iter : IPyIterator<T>
+        {
+
+            private int _pos;
+            private int _size;
+            private T[] _buf;
+            public Iter(T[] buf, int pos, int size)
+            {
+                this._buf = buf;
+                this._pos = pos;
+                this._size = size;
             }
+            public T Next()
+            {
+                if (this._size == 0)
+                {
+                    throw new PyStopIteration();
+                }
+                this._size = this._size - 1;
+                int p = this._pos;
+                this._pos = (this._pos + 1) % this._buf.Count();
+                return this._buf[p];
+            }
+        };
+        public IPyIterator<T> SubIter(int pos, int size)
+        {
+            return new Iter(this._buf, (this._p + pos) % this.Length, size);
         }
+
+
+
         // @property
         // def tail(self)->T:
         //     """ バッファの末尾 もっとも新しい要素"""

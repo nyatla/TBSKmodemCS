@@ -239,8 +239,9 @@ namespace jp.nyatla.kokolink.protocol.tbsk.preamble
                             //# #ピーク周辺の読出し
                             //# [next(cof) for _ in range(symbol_ticks//4)]
                             //# バッファリングしておいた相関値に3値平均フィルタ
-                            var buf = cof.Buf.Sublist(cof.Buf.Length -symbol_ticks, symbol_ticks);//buf = cof.buf[-symbol_ticks:]
-                            //var b =[(i + self._nor - symbol_ticks + 1, buf[i] + buf[i + 1] + buf[2]) for i in range(len(buf) - 2)];// #位置,相関値
+                            var buf = Functions.ToArray(cof.Buf.SubIter(cof.Buf.Length - symbol_ticks, symbol_ticks));//buf = cof.buf[-symbol_ticks:]
+
+
                             var b = new List<ValueTuple<int, double>>();
                             for (var i = 0; i < buf.Length - 2; i++)
                             {
@@ -257,7 +258,9 @@ namespace jp.nyatla.kokolink.protocol.tbsk.preamble
 
                             //# Lレベルシンボルの範囲を得る
                             var s = peak_pos - symbol_ticks * sample_width - (this._nor - cofbuf_len);
-                            var lw = cof.Buf.Sublist(s, cycle * symbol_ticks);
+
+                            var lw = Functions.ToArray(cof.Buf.SubIter(s, cycle * symbol_ticks));
+
                             Array.Sort(lw);//cof.buf[s: s + cycle * symbol_ticks]
                             // 実装ミスで機能してないからコメントアウト
                             //lw = lw.Take(lw.Length * 3 / 2 + 1).ToArray(); //lw[:len(lw) * 3 / 2 + 1];
@@ -269,7 +272,8 @@ namespace jp.nyatla.kokolink.protocol.tbsk.preamble
                             //#Hレベルシンボルの範囲を得る
                             //# s=peak_pos-symbol_ticks*6-(self._nor-cofbuf_len)
                             s = peak_pos - symbol_ticks * sample_width * 2 - (this._nor - cofbuf_len);
-                            var lh = cof.Buf.Sublist(s, cycle * symbol_ticks);
+                            var lh = Functions.ToArray(cof.Buf.SubIter(s, cycle * symbol_ticks));
+
                             Array.Sort(lh);
                             Array.Reverse(lh);
                             // 実装ミスで機能してないからコメントアウト
