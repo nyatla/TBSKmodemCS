@@ -244,7 +244,7 @@ namespace jp.nyatla.kokolink.protocol.tbsk.preamble
                             var b = new List<ValueTuple<int, double>>();
                             for (var i = 0; i < buf.Length - 2; i++)
                             {
-                                b.Add((i + this._nor - symbol_ticks + 1, buf[i] + buf[i + 1] + buf[2]));
+                                b.Add((i + this._nor - symbol_ticks + 1, buf[i] + buf[i + 1] + buf[i+2]));
                             }
                             //var b.sort(key = lambda x: x[1], reverse = True);
                             b.Sort((a, b) => a.Item2 == b.Item2 ? 0 : (a.Item2 < b.Item2 ? 1 : -1));
