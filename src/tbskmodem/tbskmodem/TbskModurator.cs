@@ -48,24 +48,28 @@ namespace jp.nyatla.tbaskmodem
             }
 
         }
-
-
-        public IEnumerable<double> ModulateAsBit(IEnumerable<int> src, bool stopsymbol = true)
+        private ISequentialEnumerable<double> _ModulateAsBit(IPyIterator<int> src, bool stopsymbol)
         {
-            SuffixTone? suffix=null;
+            SuffixTone? suffix = null;
             if (stopsymbol)
             {
                 suffix = new SuffixTone(this._tone);
             }
             //既にIPyIteratorを持っていたらそのまま使う。
             return SequentialEnumerable<double>.CreateInstance(
-                base.ModulateAsBit(Functions.ToPyIter<int>(src),suffix:suffix)
+                base.ModulateAsBit(src, suffix: suffix)
             );
         }
 
 
+        public IEnumerable<double> ModulateAsBit(IEnumerable<int> src, bool stopsymbol = true)
+        {
+            return this._ModulateAsBit(Functions.ToPyIter<int>(src),stopsymbol);
+        }
 
-        public ISequentialEnumerable<double> ModulateAsHexStr(string src)
+
+
+        public ISequentialEnumerable<double> ModulateAsHexStr(string src, bool stopsymbol = true)
         {
             // """ hex stringを変調します。
             //     hex stringは(0x)?[0-9a-fA-F]{2}形式の文字列です。
@@ -81,45 +85,30 @@ namespace jp.nyatla.tbaskmodem
             {
                 d.Add(Convert.ToByte(src[i * 2] + src[i * 2 + 1]));
             }
-            return this.Modulate(d);
+            return this.Modulate(d, stopsymbol);
         }
 
 
 
         public ISequentialEnumerable<double> Modulate(IEnumerable<int> src, int bitwidth = 8, bool stopsymbol= true)
         {
-            SuffixTone? suffix = null;
-            if (stopsymbol)
-            {
-                suffix = new SuffixTone(this._tone);
-            }
             //既にIPyIteratorを持っていたらそのまま使う。
-            return SequentialEnumerable<double>.CreateInstance(base.ModulateAsBit(
-                new BitsWidthFilter(bitwidth).SetInput(new RoStream<int>(Functions.ToPyIter<int>(src))),suffix:suffix
-            ));
+            return this._ModulateAsBit(
+                new BitsWidthFilter(bitwidth).SetInput(new RoStream<int>(Functions.ToPyIter<int>(src))),stopsymbol
+            );
         }
         public ISequentialEnumerable<double> Modulate(IEnumerable<byte> src, bool stopsymbol = true)
         {
-            SuffixTone? suffix = null;
-            if (stopsymbol)
-            {
-                suffix = new SuffixTone(this._tone);
-            }
             //既にIPyIteratorを持っていたらそのまま使う。
-            return SequentialEnumerable<double>.CreateInstance(this.ModulateAsBit(
-                new BitsWidthFilter(8).SetInput(new ByteStream(Functions.ToPyIter<byte>(src))), suffix: suffix
-                ));
+            return this._ModulateAsBit(
+                new BitsWidthFilter(8).SetInput(new ByteStream(Functions.ToPyIter<byte>(src))), stopsymbol
+                );
         }
         public ISequentialEnumerable<double> Modulate(string src, string encoding = "utf-8", bool stopsymbol = true)
         {
-            SuffixTone? suffix = null;
-            if (stopsymbol)
-            {
-                suffix = new SuffixTone(this._tone);
-            }
-            return SequentialEnumerable<double>.CreateInstance(this.ModulateAsBit(
-                new BitsWidthFilter(8).SetInput(new ByteStream(src, encoding: encoding)), suffix: suffix
-                ));
+            return this._ModulateAsBit(
+                new BitsWidthFilter(8).SetInput(new ByteStream(src, encoding: encoding)), stopsymbol
+                );
         }
     }
 }
