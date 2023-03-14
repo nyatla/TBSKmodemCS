@@ -1,25 +1,21 @@
 # TBSK modem for C#
 
-Japanese documente 👉[Readme.md](Readme.md)
 
-This is pure C# implementation of TBSKmodem.
+日本語ドキュメント 👉[README.ja.md](README.ja.md)
+
+
+This is pure C# implementation of TBSKmodem. 
+
 🐓[TBSKmodem](https://github.com/nyatla/TBSKmodem)
 
+The API is largely identical to Python.
 
-TBSK (Trait Block Shift Keying) modem is a low-speed, short-range audio communication implementation without FFT/IFTT.
-
-It can modulate a byte/bitstream to PCM  and demodulate PCM to a byte/bitstream.
-
-There is a library for development and a console script [tbskmodem](tbskmodem.md).
-
-![preview_tbsk](https://user-images.githubusercontent.com/2483108/194768184-cecddff0-1fa4-4df8-af3f-f16ed4ef1718.gif)
-
-See [Youtube](https://www.youtube.com/watch?v=4cB3hWATDUQ) with modulated sound.
-
-※This is python demonstration.
+Audio interface can use [NAudio](https://github.com/naudio/NAudio).
 
 
-## License
+
+
+# License
 
 This software is provided under the MIT license. For hobby and research purposes, use it according to the MIT license.
 
@@ -28,27 +24,44 @@ For industrial applications, be careful with patents.
 This library is MIT licensed open source software, but not patent free.
 
 
-## GetStarted
 
+# GetStarted
 
-### Setup with Getstarted.
-Clone the sorce code from github.
+There are some sample project for visual studios.
+
+## Setup
+
+Clone source codes from Github.
+
 
 ```
 >git clone https://github.com/nyatla/TBSKmodemCS.git
 ```
 
-TBSKmodemCS has some getstarted samples project. Open TBSKmodem.sln and click getstarted folder.
 
+## Programs
 
+There is a sample programs same as  the Python version.
 
+### Modulation
+Modulates binary data into a playable audio signal.
+https://github.com/nyatla/TBSKmodemCS/blob/master/windows/TBSKmodem/getstarted/step1_modulate/Program.cs
 
-1. step1_modulate - Modulate to wave file
-2. step2_demodulate - Demodulate from wav file
-3. step3_bytedata - Modulate and demodulate byte data
-4. step4_text - Modulate and demodulate text
-5. step5_microphone - Testing microphone
-6. step6_realtime_receive - Realtime demodulation
+### Demodulation
+Extract data from wav file.
+https://github.com/nyatla/TBSKmodemCS/blob/master/windows/TBSKmodem/getstarted/step2_demodulate/Program.cs
 
+### Byte data modulation and demodulation
+Samples of bytes modulation and demodulation.
+https://github.com/nyatla/TBSKmodemCS/blob/master/windows/TBSKmodem/getstarted/step3_bytedata/Program.cs
 
+###  Text data modulation and demodulation
+Samples of texts modulation and demodulation.
+https://github.com/nyatla/TBSKmodemCS/blob/master/windows/TBSKmodem/getstarted/step4_text/Program.cs
 
+### Audio input test
+Displays the microphone input level.
+https://github.com/nyatla/TBSKmodemCS/blob/master/windows/TBSKmodem/getstarted/step5_microphone/Program.cs
+### Realtime demodulation.
+Read the signal in real time from the microphone.
+https://github.com/nyatla/TBSKmodemCS/blob/master/windows/TBSKmodem/getstarted/step6_realtime_receive/Program.cs
