@@ -1,7 +1,7 @@
 # TBSK modem for C#
 
 
-English documente 👉[Readme.md](Readme.md)
+English documente 👉[README.md](README.md)
 
 
 C#で実装したTBSKmodemです。Python版の同等のAPIを備えています。
